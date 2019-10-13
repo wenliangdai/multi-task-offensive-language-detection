@@ -20,10 +20,14 @@ def train_model(model, epochs, dataloaders, criterion, optimizer, scheduler, dev
     # Statistics to record
     best_train_acc = 0
     best_val_acc = 0
+    best_train_f1 = 0
+    best_val_f1 = 0
     train_accs = []
     val_accs = []
     train_losses = []
     val_losses = []
+    train_f1 = []
+    val_f1 = []
     best_model_weights = None
 
     for epoch in range(epochs):
@@ -72,19 +76,22 @@ def train_model(model, epochs, dataloaders, criterion, optimizer, scheduler, dev
 
             this_loss /= iter_per_epoch
             this_acc /= iter_per_epoch
-            print('[Loss = {:4f}, Acc = {:4f}]'.format(this_loss, this_acc))
+            this_f1 /= iter_per_epoch
+            print('[Loss = {:4f}, Acc = {:4f}, F1 = {:4f}]'.format(this_loss, this_acc, this_f1))
 
             if phase == 'train':
                 train_losses.append(this_loss)
                 train_accs.append(this_acc)
-                if this_acc > best_train_acc:
-                    best_train_acc = this_acc
+                train_f1.append(this_f1)
+                if this_f1 > best_train_f1:
+                    best_train_f1 = this_f1
             else:
                 patience_counter += 1
                 val_losses.append(this_loss)
                 val_accs.append(this_acc)
-                if this_acc > best_val_acc:
-                    best_val_acc = this_acc
+                val_f1.append(this_f1)
+                if this_f1 > best_val_f1:
+                    best_val_f1 = this_f1
                     patience_counter = 0
                     best_model_weights = copy.deepcopy(model.state_dict())
                 elif patience_counter == patience:
