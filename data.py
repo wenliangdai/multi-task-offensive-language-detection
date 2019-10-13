@@ -40,6 +40,7 @@ def read_test_file(task, truncate=-1):
 
     if truncate > 0:
         token_ids = truncate_sents(token_ids, truncate)
+        mask = truncate_sents(mask, truncate)
 
     return ids, token_ids, mask, labels
 
