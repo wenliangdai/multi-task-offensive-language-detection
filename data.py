@@ -53,6 +53,7 @@ def bert_all_tasks(filepath: str, truncate=-1):
 
     if truncate > 0:
         token_ids = truncate_sents(token_ids, truncate)
+        mask = truncate_sents(mask, truncate)
 
     return ids, token_ids, mask, label_a, label_b, label_c
 
@@ -65,6 +66,7 @@ def bert_task_a(filepath: str, truncate=-1):
 
     if truncate > 0:
         token_ids = truncate_sents(token_ids, truncate)
+        mask = truncate_sents(mask, truncate)
 
     return ids, token_ids, mask, label_a
 
@@ -86,6 +88,7 @@ def bert_task_b(filepath: str, truncate=-1):
 
     if truncate > 0:
         token_ids = truncate_sents(token_ids, truncate)
+        mask = truncate_sents(mask, truncate)
 
     return ids, token_ids, mask, label_b
 
@@ -107,5 +110,6 @@ def bert_task_c(filepath: str, truncate=-1):
 
     if truncate > 0:
         token_ids = truncate_sents(token_ids, truncate)
+        mask = truncate_sents(mask, truncate)
 
     return ids, token_ids, mask, label_c
