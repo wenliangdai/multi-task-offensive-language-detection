@@ -64,7 +64,7 @@ def train_model(model, epochs, dataloaders, criterion, optimizer, scheduler, dev
                     acc = torch.sum(y_pred == labels).item() / logits.size(dim=0)
                     this_loss += loss.item()
                     this_acc += acc
-                    this_f1 += f1_score(labels.cpu(), y_pred, average='macro')
+                    this_f1 += f1_score(labels.cpu(), y_pred.cpu(), average='macro')
 
                     if phase == 'train':
                         loss.backward()
