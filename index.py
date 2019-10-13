@@ -124,8 +124,8 @@ if __name__ == '__main__':
     os.environ["CUDA_VISIBLE_DEVICES"] = args['cuda']
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-    ids, token_ids, mask, labels = bert_task_a(TRAIN_PATH)
-    test_ids, test_token_ids, test_mask, test_labels = read_test_file('a')
+    ids, token_ids, mask, labels = bert_task_a(TRAIN_PATH, truncate=args['truncate'])
+    test_ids, test_token_ids, test_mask, test_labels = read_test_file('a', truncate=args['truncate'])
 
     dataloaders = {
         'train': DataLoader(
