@@ -140,6 +140,7 @@ if __name__ == '__main__':
     }
 
     model = BERT_BASE()
+    model = model.to(device=device)
     criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=args['learning_rate'])
 
