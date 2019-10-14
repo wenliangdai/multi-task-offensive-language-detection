@@ -124,7 +124,7 @@ if __name__ == '__main__':
     args = get_args()
 
     # Fix seed for reproducibility
-    seed = 0
+    seed = 1
     torch.manual_seed(seed)
     np.random.seed(seed)
 
@@ -134,6 +134,10 @@ if __name__ == '__main__':
 
     ids, token_ids, mask, labels = bert_task_a(TRAIN_PATH, truncate=args['truncate'])
     test_ids, test_token_ids, test_mask, test_labels = read_test_file('a', truncate=args['truncate'])
+
+    nums_off = np.sum(labels == 'OFF') + np.sum(test_labels == 'OFF')
+    nums_not = np.sum(labels == 'NOT') + np.sum(test_labels == 'NOT')
+    total = nums_off + nums_not
 
     dataloaders = {
         'train': DataLoader(
@@ -159,7 +163,7 @@ if __name__ == '__main__':
 
     model = BERT_BASE()
     model = model.to(device=device)
-    criterion = torch.nn.CrossEntropyLoss()
+    criterion = torch.nn.CrossEntropyLoss(weight=torch.tensor([nums_off / total, nums_not / total]))
     optimizer = torch.optim.Adam(model.parameters(), lr=args['learning_rate'], weight_decay=args['weight_decay'])
 
     train_model(
