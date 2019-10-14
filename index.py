@@ -69,7 +69,7 @@ def train_model(model, epochs, dataloaders, criterion, optimizer, scheduler, dev
 
                     if phase == 'train':
                         loss.backward()
-                        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1)
+                        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=10)
                         optimizer.step()
                         # scheduler.step()
                         if iteration % print_iter == 0:
