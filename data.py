@@ -1,7 +1,9 @@
 import os
 import pandas as pd
 import numpy as np
+import emoji
 import nltk
+from wordsegment import load, segment
 from embeddings import GloveEmbedding
 from nltk.tokenize import word_tokenize
 # from vocabulary import Vocab
@@ -18,6 +20,10 @@ def read_file(filepath: str):
 
     ids = np.array(df['id'].values)
     tweets = np.array(df['tweet'].values)
+    tweets = emoji2word(tweets)
+    tweets = replace_rare_words(tweets)
+    tweets = remove_replicates(tweets)
+    tweets = segment_hashtag(tweets)
     label_a = np.array(df['subtask_a'].values)
     label_b = np.array(df['subtask_b'].values)
     label_c = np.array(df['subtask_c'].values)
@@ -44,6 +50,36 @@ def read_test_file(task, truncate=-1):
 
     return ids, token_ids, mask, labels
 
+def emoji2word(sents):
+    return [emoji.demojize(sent) for sent in sents]
+
+def remove_replicates(sents):
+    # if there are multiple `@USER` tokens in a tweet, replace it with `@USERS`
+    # because some tweets contain so many `@USER` which may cause redundant
+    for i, sent in enumerate(sents):
+        if sent.find('@USER') != sent.rfind('@USER'):
+            sents[i] = sent.replace('@USER', '')
+            sents[i] = '@USERS ' + sents[i]
+    return sents
+
+def replace_rare_words(sents):
+    rare_words = {
+        'URL': 'http'
+    }
+    for i, sent in enumerate(sents):
+        for w in rare_words.keys():
+            sents[i] = sent.replace(w, rare_words[w])
+    return sents
+
+def segment_hashtag(sents):
+    # E.g. '#LunaticLeft' => 'lunatic left'
+    for i, sent in enumerate(sents):
+        sent_tokens = sent.split(' ')
+        for j, t in enumerate(sent_tokens):
+            if t.find('#') == 0:
+                sent_tokens[j] = ' '.join(segment(t))
+        sents[i] = ' '.join(sent_tokens)
+    return sents
 
 def bert_all_tasks(filepath: str, truncate=-1):
     nums, ids, tweets, label_a, label_b, label_c = read_file(filepath)
