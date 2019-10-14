@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import emoji
 import nltk
-from wordsegment import load, segment
+import wordsegment
 from embeddings import GloveEmbedding
 from nltk.tokenize import word_tokenize
 # from vocabulary import Vocab
@@ -13,7 +13,7 @@ from transformers import BertTokenizer
 
 # Uncomment this line if you haven't download nltk packages
 # nltk.download()
-
+wordsegment.load()
 
 def read_file(filepath: str):
     df = pd.read_csv(filepath, sep='\t')
@@ -77,7 +77,7 @@ def segment_hashtag(sents):
         sent_tokens = sent.split(' ')
         for j, t in enumerate(sent_tokens):
             if t.find('#') == 0:
-                sent_tokens[j] = ' '.join(segment(t))
+                sent_tokens[j] = ' '.join(wordsegment.segment(t))
         sents[i] = ' '.join(sent_tokens)
     return sents
 
