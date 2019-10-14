@@ -1,6 +1,7 @@
 import os
 import copy
 import datetime
+import numpy as np
 import torch
 from torch.utils.data import DataLoader
 from sklearn.metrics import f1_score
@@ -119,8 +120,15 @@ def train_model(model, epochs, dataloaders, criterion, optimizer, scheduler, dev
 
 
 if __name__ == '__main__':
+    # Get command line arguments
     args = get_args()
 
+    # Fix seed for reproducibility
+    seed = 0
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+
+    # Set device
     os.environ["CUDA_VISIBLE_DEVICES"] = args['cuda']
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
@@ -129,12 +137,22 @@ if __name__ == '__main__':
 
     dataloaders = {
         'train': DataLoader(
-            dataset=BERTDataset(input_ids=token_ids, mask=mask, labels=labels, label_dict={'OFF': 0, 'NOT': 1}),
+            dataset=BERTDataset(
+                input_ids=token_ids,
+                mask=mask,
+                labels=labels,
+                label_dict={'OFF': 0, 'NOT': 1}
+            ),
             batch_size=args['batch_size'],
             shuffle=True
         ),
         'val': DataLoader(
-            dataset=BERTDataset(input_ids=test_token_ids, mask=test_mask, labels=test_labels, label_dict={'OFF': 0, 'NOT': 1}),
+            dataset=BERTDataset(
+                input_ids=test_token_ids,
+                mask=test_mask,
+                labels=test_labels,
+                label_dict={'OFF': 0, 'NOT': 1}
+            ),
             batch_size=args['batch_size']
         )
     }
@@ -142,7 +160,7 @@ if __name__ == '__main__':
     model = BERT_BASE()
     model = model.to(device=device)
     criterion = torch.nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=args['learning_rate'])
+    optimizer = torch.optim.Adam(model.parameters(), lr=args['learning_rate'], weight_decay=args['weight_decay'])
 
     train_model(
         model=model,

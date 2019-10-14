@@ -6,6 +6,7 @@ def get_args():
     # Training hyper-parameters
     parser.add_argument('-bs', '--batch_size', help='Batch size', type=int, required=True)
     parser.add_argument('-lr', '--learning_rate', help='Learning rate', type=float, required=True)
+    parser.add_argument('-wd', '--weight_decay', help='Weight decay', type=float, required=False, default=0)
     parser.add_argument('-ep', '--epochs', help='Number of epochs', type=int, required=True)
     parser.add_argument('-tn', '--task_name', help='Task name (no space E.g. task2_bert), used for suffix of filenames', type=str, required=True)
     parser.add_argument('-tr', '--truncate', help='Truncate the sequence length to', type=int, required=False, default=-1)
