@@ -20,10 +20,19 @@ def read_file(filepath: str):
 
     ids = np.array(df['id'].values)
     tweets = np.array(df['tweet'].values)
+
+    # Process tweets
     tweets = emoji2word(tweets)
     tweets = replace_rare_words(tweets)
     tweets = remove_replicates(tweets)
     tweets = segment_hashtag(tweets)
+    tweets = remove_useless_punctuation(tweets)
+
+    # with open('temp.txt', 'w') as f:
+    #     for t in tweets:
+    #         f.write(t + '\n')
+    # exit(1)
+
     label_a = np.array(df['subtask_a'].values)
     label_b = np.array(df['subtask_b'].values)
     label_c = np.array(df['subtask_c'].values)
@@ -52,6 +61,14 @@ def read_test_file(task, truncate=-1):
 
 def emoji2word(sents):
     return [emoji.demojize(sent) for sent in sents]
+
+def remove_useless_punctuation(sents):
+    for i, sent in enumerate(sents):
+        sent = sent.replace(':', ' ')
+        sent = sent.replace('_', ' ')
+        sent = sent.replace('...', ' ')
+        sents[i] = sent
+    return sents
 
 def remove_replicates(sents):
     # if there are multiple `@USER` tokens in a tweet, replace it with `@USERS`
