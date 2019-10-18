@@ -1,2 +1,3 @@
 # offensive-language-detection
-Codebase for SemEval-2020 task12 OffensEval.
+Code repo for SemEval-2020 Task 12.
+

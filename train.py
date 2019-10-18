@@ -5,7 +5,7 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 from sklearn.metrics import f1_score
-from data import bert_all_tasks, bert_task_a, read_test_file
+from data import bert_all_tasks, bert_task_a, bert_task_b, bert_task_c, read_test_file
 from config import OLID_PATH, SAVE_PATH
 from cli import get_args
 from utils import save
@@ -69,7 +69,7 @@ def train_model(model, epochs, dataloaders, criterion, optimizer, scheduler, dev
 
                     if phase == 'train':
                         loss.backward()
-                        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=5)
+                        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=10)
                         optimizer.step()
                         # scheduler.step()
                         if iteration % print_iter == 0:
@@ -122,6 +122,7 @@ def train_model(model, epochs, dataloaders, criterion, optimizer, scheduler, dev
 if __name__ == '__main__':
     # Get command line arguments
     args = get_args()
+    task = args['task']
 
     # Fix seed for reproducibility
     seed = 1
@@ -132,12 +133,29 @@ if __name__ == '__main__':
     os.environ["CUDA_VISIBLE_DEVICES"] = args['cuda']
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-    ids, token_ids, mask, labels = bert_task_a(TRAIN_PATH, truncate=args['truncate'])
-    test_ids, test_token_ids, test_mask, test_labels = read_test_file('a', truncate=args['truncate'])
-
-    nums_off = np.sum(labels == 'OFF') + np.sum(test_labels == 'OFF')
-    nums_not = np.sum(labels == 'NOT') + np.sum(test_labels == 'NOT')
-    total = nums_off + nums_not
+    cross_entropy_loss_weight = None
+    test_ids, test_token_ids, test_mask, test_labels = read_test_file(task, truncate=args['truncate'])
+    if task == 'a':
+        ids, token_ids, mask, labels = bert_task_a(TRAIN_PATH, truncate=args['truncate'])
+        nums_off = np.sum(labels == 'OFF') + np.sum(test_labels == 'OFF')
+        nums_not = np.sum(labels == 'NOT') + np.sum(test_labels == 'NOT')
+        total = nums_off + nums_not
+        cross_entropy_loss_weight = torch.tensor([nums_off / total, nums_not / total])
+    elif task == 'b':
+        ids, token_ids, mask, labels = bert_task_b(TRAIN_PATH, truncate=args['truncate'])
+        nums_tin = np.sum(labels == 'TIN') + np.sum(test_labels == 'TIN')
+        nums_unt = np.sum(labels == 'UNT') + np.sum(test_labels == 'UNT')
+        total = nums_tin + nums_unt
+        cross_entropy_loss_weight = torch.tensor([nums_tin / total, nums_unt / total])
+    elif task == 'c':
+        ids, token_ids, mask, labels = bert_task_c(TRAIN_PATH, truncate=args['truncate'])
+        nums_ind = np.sum(labels == 'IND') + np.sum(test_labels == 'IND')
+        nums_grp = np.sum(labels == 'GRP') + np.sum(test_labels == 'GRP')
+        nums_oth = np.sum(labels == 'OTH') + np.sum(test_labels == 'OTH')
+        total = nums_ind + nums_grp + nums_oth
+        cross_entropy_loss_weight = torch.tensor([nums_ind / total, nums_grp / total, nums_oth / total])
+    else:
+        raise Exception('Incorrect task={}'.format(task))
 
     dataloaders = {
         'train': DataLoader(
@@ -145,7 +163,7 @@ if __name__ == '__main__':
                 input_ids=token_ids,
                 mask=mask,
                 labels=labels,
-                label_dict={'OFF': 0, 'NOT': 1}
+                task=task
             ),
             batch_size=args['batch_size'],
             shuffle=True
@@ -155,7 +173,7 @@ if __name__ == '__main__':
                 input_ids=test_token_ids,
                 mask=test_mask,
                 labels=test_labels,
-                label_dict={'OFF': 0, 'NOT': 1}
+                task=task
             ),
             batch_size=args['batch_size']
         )
@@ -163,7 +181,7 @@ if __name__ == '__main__':
 
     model = BERT_BASE()
     model = model.to(device=device)
-    criterion = torch.nn.CrossEntropyLoss(weight=torch.tensor([nums_off / total, nums_not / total]))
+    criterion = torch.nn.CrossEntropyLoss(weight=cross_entropy_loss_weight)
     optimizer = torch.optim.Adam(model.parameters(), lr=args['learning_rate'], weight_decay=args['weight_decay'])
 
     train_model(
@@ -176,5 +194,5 @@ if __name__ == '__main__':
         device=device,
         print_iter=args['print_iter'],
         patience=args['patience'],
-        task_name=args['task_name']
+        task_name=args['task']
     )
