@@ -46,7 +46,7 @@ def train_model(model, epochs, dataloaders, criterion, optimizer, scheduler, dev
 
             dataloader = dataloaders[phase]
             this_acc = 0
-            this_f1 = 0
+            this_f1 = [0, 0]
             this_loss = 0
             iter_per_epoch = 0
             for iteration, (inputs, mask, labels) in enumerate(dataloader):
@@ -65,7 +65,8 @@ def train_model(model, epochs, dataloaders, criterion, optimizer, scheduler, dev
                     acc = torch.sum(y_pred == labels).item() / logits.size(dim=0)
                     this_loss += loss.item()
                     this_acc += acc
-                    this_f1 += f1_score(labels.cpu(), y_pred.cpu(), average='macro')
+                    this_f1[0] += f1_score(labels.cpu(), y_pred.cpu(), average='macro')
+                    this_f1[1] += f1_score(labels.cpu(), y_pred.cpu(), average='micro')
 
                     if phase == 'train':
                         loss.backward()
@@ -77,22 +78,23 @@ def train_model(model, epochs, dataloaders, criterion, optimizer, scheduler, dev
 
             this_loss /= iter_per_epoch
             this_acc /= iter_per_epoch
-            this_f1 /= iter_per_epoch
-            print('[Loss = {:4f}, Acc = {:4f}, F1 = {:4f}]'.format(this_loss, this_acc, this_f1))
+            this_f1[0] /= iter_per_epoch
+            this_f1[1] /= iter_per_epoch
+            print('[Loss = {:4f}, Acc = {:4f}, Macro-F1 = {:4f}, Micro-F1 = {:4f}]'.format(this_loss, this_acc, this_f1[0], this_f1[1]))
 
             if phase == 'train':
                 train_losses.append(this_loss)
                 train_accs.append(this_acc)
                 train_f1.append(this_f1)
-                if this_f1 > best_train_f1:
-                    best_train_f1 = this_f1
+                if this_f1[0] > best_train_f1:
+                    best_train_f1 = this_f1[0]
             else:
                 patience_counter += 1
                 val_losses.append(this_loss)
                 val_accs.append(this_acc)
                 val_f1.append(this_f1)
-                if this_f1 > best_val_f1:
-                    best_val_f1 = this_f1
+                if this_f1[0] > best_val_f1:
+                    best_val_f1 = this_f1[0]
                     patience_counter = 0
                     best_model_weights = copy.deepcopy(model.state_dict())
                 elif patience_counter == patience:
