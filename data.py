@@ -27,6 +27,7 @@ def read_file(filepath: str):
     tweets = remove_replicates(tweets)
     tweets = segment_hashtag(tweets)
     tweets = remove_useless_punctuation(tweets)
+    tweets = np.array(tweets)
 
     # with open('temp.txt', 'w') as f:
     #     for t in tweets:
