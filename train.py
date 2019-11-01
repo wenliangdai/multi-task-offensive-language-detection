@@ -176,6 +176,7 @@ if __name__ == '__main__':
         raise Exception('Incorrect task={}'.format(task))
 
     cross_entropy_loss_weight = get_loss_weight(np.concatenate((labels, test_labels)), label_orders[task])
+    print(f'Label weights: {cross_entropy_loss_weight}')
 
     dataloaders = {
         'train': DataLoader(
