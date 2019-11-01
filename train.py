@@ -82,6 +82,7 @@ def train_model(model, epochs, dataloaders, criterion, optimizer, scheduler, dev
             # this_acc /= iter_per_epoch
             this_f1[0] /= iter_per_epoch
             this_f1[1] /= iter_per_epoch
+            this_f1[2] /= iter_per_epoch
 
             print('*' * 10)
             print(f'Loss={this_loss}')
