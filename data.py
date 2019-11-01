@@ -21,17 +21,7 @@ def read_file(filepath: str):
     tweets = np.array(df['tweet'].values)
 
     # Process tweets
-    tweets = emoji2word(tweets)
-    tweets = replace_rare_words(tweets)
-    tweets = remove_replicates(tweets)
-    tweets = segment_hashtag(tweets)
-    tweets = remove_useless_punctuation(tweets)
-    tweets = np.array(tweets)
-
-    # with open('temp.txt', 'w') as f:
-    #     for t in tweets:
-    #         f.write(t + '\n')
-    # exit(1)
+    tweets = process_tweets(tweets)
 
     label_a = np.array(df['subtask_a'].values)
     label_b = df['subtask_b'].values
@@ -48,6 +38,9 @@ def read_test_file(task, tokenizer, truncate=-1):
     labels = np.array(df2['label'].values)
     nums = len(df1)
 
+    # Process tweets
+    tweets = process_tweets(tweets)
+
     # tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
     token_ids = [tokenizer.encode(text=tweets[i], add_special_tokens=True) for i in range(nums)]
     mask = np.array(get_mask(token_ids))
@@ -58,6 +51,44 @@ def read_test_file(task, tokenizer, truncate=-1):
         mask = truncate_sents(mask, truncate)
 
     return ids, token_ids, mask, labels
+
+def read_test_file_all(tokenizer, truncate=-1):
+    df = pd.read_csv(os.path.join(OLID_PATH, 'testset-levela.tsv'), sep='\t')
+    df_a = pd.read_csv(os.path.join(OLID_PATH, 'labels-levela.csv'), sep=',')
+    ids = np.array(df['id'].values)
+    tweets = np.array(df['tweet'].values)
+    label_a = np.array(df_a['label'].values)
+    nums = len(df)
+
+    # Process tweets
+    tweets = process_tweets(tweets)
+
+    df_b = pd.read_csv(os.path.join(OLID_PATH, 'labels-levelb.csv'), sep=',')
+    df_c = pd.read_csv(os.path.join(OLID_PATH, 'labels-levelc.csv'), sep=',')
+    label_data_b = dict(zip(df_b['id'].values, df_b['label'].values))
+    label_data_c = dict(zip(df_c['id'].values, df_c['label'].values))
+    label_b = [label_data_b[id] if id in label_data_b.keys() else 'NULL' for id in ids]
+    label_c = [label_data_c[id] if id in label_data_c.keys() else 'NULL' for id in ids]
+
+    token_ids = [tokenizer.encode(text=tweets[i], add_special_tokens=True) for i in range(nums)]
+    mask = np.array(get_mask(token_ids))
+    token_ids = np.array(pad_sents(token_ids, tokenizer.pad_token_id))
+
+    if truncate > 0:
+        token_ids = truncate_sents(token_ids, truncate)
+        mask = truncate_sents(mask, truncate)
+
+    return ids, token_ids, mask, label_a, label_b, label_c
+
+def process_tweets(tweets):
+    # Process tweets
+    tweets = emoji2word(tweets)
+    tweets = replace_rare_words(tweets)
+    tweets = remove_replicates(tweets)
+    tweets = segment_hashtag(tweets)
+    tweets = remove_useless_punctuation(tweets)
+    tweets = np.array(tweets)
+    return tweets
 
 def emoji2word(sents):
     return [emoji.demojize(sent) for sent in sents]

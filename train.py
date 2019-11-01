@@ -33,12 +33,8 @@ def train_model(
     # When patience_counter > patience, the training will stop
     patience_counter = 0
     # Statistics to record
-    # best_train_acc = 0
-    # best_val_acc = 0
     best_train_f1 = 0
     best_val_f1 = 0
-    # train_accs = []
-    # val_accs = []
     train_losses = []
     val_losses = []
     train_f1 = []
@@ -59,7 +55,6 @@ def train_model(
                 model.eval() # Set model to evaluate mode
 
             dataloader = dataloaders[phase]
-            # this_acc = 0
             this_f1 = [0, 0, 0] # macro, micro, weighted
             this_loss = 0
             iter_per_epoch = 0
@@ -78,7 +73,6 @@ def train_model(
                     y_pred = logits.argmax(dim=1)
                     # acc = torch.sum(y_pred == labels).item() / logits.size(dim=0)
                     this_loss += loss.item()
-                    # this_acc += acc
                     this_f1[0] += f1_score(labels.cpu(), y_pred.cpu(), average='macro')
                     this_f1[1] += f1_score(labels.cpu(), y_pred.cpu(), average='micro')
                     this_f1[2] += f1_score(labels.cpu(), y_pred.cpu(), average='weighted')
@@ -92,7 +86,6 @@ def train_model(
                             print(f'Iteration {iteration}: loss = {loss:5f}')
 
             this_loss /= iter_per_epoch
-            # this_acc /= iter_per_epoch
             this_f1[0] /= iter_per_epoch
             this_f1[1] /= iter_per_epoch
             this_f1[2] /= iter_per_epoch
@@ -106,14 +99,12 @@ def train_model(
 
             if phase == 'train':
                 train_losses.append(this_loss)
-                # train_accs.append(this_acc)
                 train_f1.append(this_f1)
                 if this_f1[0] > best_train_f1:
                     best_train_f1 = this_f1[0]
             else:
                 patience_counter += 1
                 val_losses.append(this_loss)
-                # val_accs.append(this_acc)
                 val_f1.append(this_f1)
                 if this_f1[0] > best_val_f1:
                     best_val_f1 = this_f1[0]
@@ -128,10 +119,6 @@ def train_model(
                         val_f1,
                         best_train_f1,
                         best_val_f1
-                        # best_train_acc,
-                        # best_val_acc,
-                        # train_accs,
-                        # val_accs
                     ), f'{SAVE_PATH}/results_{task_name}_{model_name}_{datetimestr}.pt')
                     exit(1)
         print()
@@ -144,10 +131,6 @@ def train_model(
         val_f1,
         best_train_f1,
         best_val_f1
-        # best_train_acc,
-        # best_val_acc,
-        # train_accs,
-        # val_accs
     ), f'{SAVE_PATH}/results_{task_name}_{model_name}_{datetimestr}.pt')
 
 
