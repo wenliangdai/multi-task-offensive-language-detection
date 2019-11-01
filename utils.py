@@ -1,5 +1,7 @@
 import os
 import pickle
+import torch
+import numpy as np
 
 def save(toBeSaved, filename, mode='wb'):
     dirname = os.path.dirname(filename)
@@ -42,3 +44,8 @@ def get_max_len(sents):
 def truncate_sents(sents, length):
     sents = [sent[:length] for sent in sents]
     return sents
+
+def get_loss_weight(labels, label_order):
+    nums = [np.sum(labels == lo) for lo in label_order]
+    loss_weight = torch.tensor([n / len(labels) for n in nums])
+    return loss_weight

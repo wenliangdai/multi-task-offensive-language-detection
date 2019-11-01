@@ -5,10 +5,10 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 from sklearn.metrics import f1_score
-from data import task_a, task_b, task_c, read_test_file # , all_tasks
+from data import task_a, task_b, task_c, all_tasks, read_test_file
 from config import OLID_PATH, SAVE_PATH
 from cli import get_args
-from utils import save
+from utils import save, get_loss_weight
 from datasets import HuggingfaceDataset
 from models.bert import BERT, RoBERTa
 from transformers import BertTokenizer, RobertaTokenizer
@@ -167,28 +167,15 @@ if __name__ == '__main__':
     model = model.to(device=device)
 
     # Read in data depends on different subtasks
-    test_ids, test_token_ids, test_mask, test_labels = read_test_file(task, tokenizer=tokenizer, truncate=truncate)
-    if task == 'a':
-        ids, token_ids, mask, labels = task_a(TRAIN_PATH, tokenizer=tokenizer, truncate=truncate)
-        nums_off = np.sum(labels == 'OFF') + np.sum(test_labels == 'OFF')
-        nums_not = np.sum(labels == 'NOT') + np.sum(test_labels == 'NOT')
-        total = nums_off + nums_not
-        cross_entropy_loss_weight = torch.tensor([nums_off / total, nums_not / total])
-    elif task == 'b':
-        ids, token_ids, mask, labels = task_b(TRAIN_PATH, tokenizer=tokenizer, truncate=truncate)
-        nums_tin = np.sum(labels == 'TIN') + np.sum(test_labels == 'TIN')
-        nums_unt = np.sum(labels == 'UNT') + np.sum(test_labels == 'UNT')
-        total = nums_tin + nums_unt
-        cross_entropy_loss_weight = torch.tensor([nums_tin / total, nums_unt / total])
-    elif task == 'c':
-        ids, token_ids, mask, labels = task_c(TRAIN_PATH, tokenizer=tokenizer, truncate=truncate)
-        nums_ind = np.sum(labels == 'IND') + np.sum(test_labels == 'IND')
-        nums_grp = np.sum(labels == 'GRP') + np.sum(test_labels == 'GRP')
-        nums_oth = np.sum(labels == 'OTH') + np.sum(test_labels == 'OTH')
-        total = nums_ind + nums_grp + nums_oth
-        cross_entropy_loss_weight = torch.tensor([nums_ind / total, nums_grp / total, nums_oth / total])
-    else:
+    data_methods = {'a': task_a, 'b': task_b, 'c': task_c, 'all': all_tasks}
+    label_orders = {'a': ['OFF', 'NOT'], 'b': ['TIN', 'UNT'], 'c': ['IND', 'GRP', 'OTH']}
+    try:
+        ids, token_ids, mask, labels = data_methods[task](TRAIN_PATH, tokenizer=tokenizer, truncate=truncate)
+        test_ids, test_token_ids, test_mask, test_labels = read_test_file(task, tokenizer=tokenizer, truncate=truncate)
+    except KeyError:
         raise Exception('Incorrect task={}'.format(task))
+
+    cross_entropy_loss_weight = get_loss_weight(np.concatenate((labels, test_labels)), label_orders[task])
 
     dataloaders = {
         'train': DataLoader(
