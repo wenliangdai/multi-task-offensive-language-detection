@@ -6,7 +6,7 @@ class BERT(nn.Module):
         super(BERT, self).__init__()
         self.model = BertForSequenceClassification.from_pretrained(f'bert-{model_size}-uncased', num_labels=num_labels)
         # Freeze embeddings parameters for saving memory
-        for param in self.model.roberta.embeddings.parameters():
+        for param in self.model.bert.embeddings.parameters():
             param.requires_grad = False
 
     def forward(self, inputs, mask, labels):
