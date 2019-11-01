@@ -47,7 +47,7 @@ def train_model(model, epochs, dataloaders, criterion, optimizer, scheduler, dev
 
             dataloader = dataloaders[phase]
             # this_acc = 0
-            this_f1 = [0, 0]
+            this_f1 = [0, 0, 0] # macro, micro, weighted
             this_loss = 0
             iter_per_epoch = 0
             for iteration, (inputs, mask, labels) in enumerate(dataloader):
@@ -68,6 +68,7 @@ def train_model(model, epochs, dataloaders, criterion, optimizer, scheduler, dev
                     # this_acc += acc
                     this_f1[0] += f1_score(labels.cpu(), y_pred.cpu(), average='macro')
                     this_f1[1] += f1_score(labels.cpu(), y_pred.cpu(), average='micro')
+                    this_f1[2] += f1_score(labels.cpu(), y_pred.cpu(), average='weighted')
 
                     if phase == 'train':
                         loss.backward()
@@ -81,7 +82,13 @@ def train_model(model, epochs, dataloaders, criterion, optimizer, scheduler, dev
             # this_acc /= iter_per_epoch
             this_f1[0] /= iter_per_epoch
             this_f1[1] /= iter_per_epoch
-            print('[Loss = {:4f},  Macro-F1 = {:4f}, Micro-F1 = {:4f}]'.format(this_loss, this_f1[0], this_f1[1]))
+
+            print('*' * 10)
+            print(f'Loss={this_loss}')
+            print(f'Macro-F1={this_f1[0]}')
+            print(f'Micro-F1={this_f1[1]}')
+            print(f'Weighted-F1={this_f1[2]}')
+            print('*' * 10)
 
             if phase == 'train':
                 train_losses.append(this_loss)
