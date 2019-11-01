@@ -12,11 +12,24 @@ from utils import save, get_loss_weight
 from datasets import HuggingfaceDataset
 from models.bert import BERT, RoBERTa
 from transformers import BertTokenizer, RobertaTokenizer
+from typing import Dict, Any
 
 TRAIN_PATH = os.path.join(OLID_PATH, 'olid-training-v1.0.tsv')
 datetimestr = datetime.datetime.now().strftime('%Y-%b-%d_%H:%M:%S')
 
-def train_model(model, epochs, dataloaders, criterion, optimizer, scheduler, device, print_iter, patience, task_name):
+def train_model(
+    model: Any,
+    epochs: int,
+    dataloaders: Dict[str, DataLoader],
+    criterion: Any,
+    optimizer: Any,
+    scheduler: Any,
+    device: Any,
+    print_iter: int,
+    patience: int,
+    task_name: str,
+    model_name: str
+):
     # When patience_counter > patience, the training will stop
     patience_counter = 0
     # Statistics to record
@@ -76,7 +89,7 @@ def train_model(model, epochs, dataloaders, criterion, optimizer, scheduler, dev
                         optimizer.step()
                         # scheduler.step()
                         if iteration % print_iter == 0:
-                            print('Iteration {}: loss = {:4f}'.format(iteration, loss))
+                            print(f'Iteration {iteration}: loss = {loss:5f}')
 
             this_loss /= iter_per_epoch
             # this_acc /= iter_per_epoch
@@ -85,10 +98,10 @@ def train_model(model, epochs, dataloaders, criterion, optimizer, scheduler, dev
             this_f1[2] /= iter_per_epoch
 
             print('*' * 10)
-            print(f'Loss={this_loss}')
-            print(f'Macro-F1={this_f1[0]}')
-            print(f'Micro-F1={this_f1[1]}')
-            print(f'Weighted-F1={this_f1[2]}')
+            print(f'Loss={this_loss:.5f}')
+            print(f'Macro-F1={this_f1[0]:.5f}')
+            print(f'Micro-F1={this_f1[1]:.5f}')
+            print(f'Weighted-F1={this_f1[2]:.5f}')
             print('*' * 10)
 
             if phase == 'train':
@@ -119,11 +132,11 @@ def train_model(model, epochs, dataloaders, criterion, optimizer, scheduler, dev
                         # best_val_acc,
                         # train_accs,
                         # val_accs
-                    ), os.path.join(SAVE_PATH, 'results' + task_name + datetimestr + '.pt'))
+                    ), f'{SAVE_PATH}/results_{task_name}_{model_name}_{datetimestr}.pt')
                     exit(1)
         print()
 
-    save(best_model_weights, os.path.join(SAVE_PATH, 'best_model_weights' + task_name + datetimestr + '.pt'))
+    save(best_model_weights, f'{SAVE_PATH}/best_model_weights_{task_name}_{model_name}_{datetimestr}.pt')
     save((
         train_losses,
         val_losses,
@@ -135,7 +148,7 @@ def train_model(model, epochs, dataloaders, criterion, optimizer, scheduler, dev
         # best_val_acc,
         # train_accs,
         # val_accs
-    ), os.path.join(SAVE_PATH, 'results' + task_name + datetimestr + '.pt'))
+    ), f'{SAVE_PATH}/results_{task_name}_{model_name}_{datetimestr}.pt')
 
 
 if __name__ == '__main__':
@@ -221,5 +234,6 @@ if __name__ == '__main__':
         device=device,
         print_iter=print_iter,
         patience=patience,
-        task_name=task
+        task_name=task,
+        model_name=model_name
     )
