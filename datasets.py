@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import Dataset
 
 
-class BERTDataset(Dataset):
+class HuggingfaceDataset(Dataset):
     def __init__(self, input_ids, mask, labels, task):
         self.input_ids = torch.tensor(input_ids)
         self.mask = torch.tensor(mask, dtype=torch.float32)
@@ -10,8 +10,8 @@ class BERTDataset(Dataset):
         self.task = task
         self.label_dict = {
             'a': {'OFF': 0, 'NOT': 1},
-            'b': {'TIN': 0, 'UNT': 1},
-            'c': {'IND': 0, 'GRP': 1, 'OTH': 2}
+            'b': {'TIN': 0, 'UNT': 1, 'NULL': 2},
+            'c': {'IND': 0, 'GRP': 1, 'OTH': 2, 'NULL': 3}
         }
 
     def __len__(self):

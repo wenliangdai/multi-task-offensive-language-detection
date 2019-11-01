@@ -1,11 +1,20 @@
 from torch import nn
-from transformers import BertTokenizer, BertForSequenceClassification
+from transformers import BertForSequenceClassification, RobertaForSequenceClassification
 
-class BERT_BASE(nn.Module):
-    def __init__(self, pretrained_type='bert-base-uncased'):
-        super(BERT_BASE, self).__init__()
-        self.tokenizer = BertTokenizer.from_pretrained(pretrained_type)
-        self.model = BertForSequenceClassification.from_pretrained(pretrained_type, num_labels=2)
+class BERT(nn.Module):
+    def __init__(self, model_size, num_labels=2):
+        super(BERT, self).__init__()
+        self.model = BertForSequenceClassification.from_pretrained(f'bert-{model_size}-uncased', num_labels=num_labels)
+
+    def forward(self, inputs, mask, labels):
+        outputs = self.model(inputs, attention_mask=mask, labels=labels)
+        loss, logits = outputs[:2]
+        return loss, logits
+
+class RoBERTa(nn.Module):
+    def __init__(self, model_size, num_labels=2):
+        super(RoBERTa, self).__init__()
+        self.model = RobertaForSequenceClassification.from_pretrained(f'roberta-{model_size}', num_labels=num_labels)
 
     def forward(self, inputs, mask, labels):
         outputs = self.model(inputs, attention_mask=mask, labels=labels)
