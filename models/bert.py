@@ -33,9 +33,9 @@ class MTModel(nn.Module):
     def __init__(self, model, model_size):
         super(MTModel, self).__init__()
         if model == 'bert':
-            self.pretrained = BertForSequenceClassification.from_pretrained(f'bert-{model_size}-uncased')
-            self.main = self.pretrained.bert
-            self.dropout = self.pretrained.dropout
+            pretrained = BertForSequenceClassification.from_pretrained(f'bert-{model_size}-uncased')
+            self.main = pretrained.bert
+            self.dropout = pretrained.dropout
         elif model == 'roberta':
             self.pretrained = RobertaForSequenceClassification.from_pretrained(f'roberta-{model_size}').roberta
 
@@ -43,14 +43,16 @@ class MTModel(nn.Module):
         for param in self.main.embeddings.parameters():
             param.requires_grad = False
 
-        self.classifiers = [
-            ('a', nn.Linear(in_features=768, out_features=2, bias=True)),
-            ('b', nn.Linear(in_features=768, out_features=3, bias=True)),
-            ('c', nn.Linear(in_features=768, out_features=4, bias=True))
-        ]
+        self.classifier_a = nn.Linear(in_features=768, out_features=2, bias=True)
+        self.classifier_b = nn.Linear(in_features=768, out_features=3, bias=True)
+        self.classifier_c = nn.Linear(in_features=768, out_features=4, bias=True)
 
     def forward(self, inputs, mask):
         outputs = self.main(inputs, attention_mask=mask)
         pooled_output = outputs[1]
-        logits_list = [c[1](pooled_output) for c in self.classifiers] # logits for 3 tasks
+        logits_list = [
+            self.classifier_a(pooled_output),
+            self.classifier_b(pooled_output),
+            self.classifier_c(pooled_output)
+        ] # logits for 3 tasks
         return logits_list
