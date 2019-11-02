@@ -1,16 +1,16 @@
 import os
-import copy
+# import copy
 import datetime
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
 from sklearn.metrics import f1_score
-from data import task_a, task_b, task_c, all_tasks, read_test_file
+from data import all_tasks, read_test_file_all
 from config import OLID_PATH, SAVE_PATH
 from cli import get_args
 from utils import save, get_loss_weight
-from datasets import HuggingfaceDataset
-from models.bert import BERT, RoBERTa
+from datasets import HuggingfaceMTDataset
+from models.bert import MTModel
 from transformers import BertTokenizer, RobertaTokenizer
 from typing import Dict, Any
 
@@ -21,7 +21,7 @@ def train_model(
     model: Any,
     epochs: int,
     dataloaders: Dict[str, DataLoader],
-    criterion: Any,
+    criterions: Any,
     optimizer: Any,
     scheduler: Any,
     device: Any,
@@ -34,12 +34,12 @@ def train_model(
     patience_counter = 0
     # Statistics to record
     best_train_f1 = 0
-    best_val_f1 = 0
+    # best_val_f1 = 0
     train_losses = []
     val_losses = []
     train_f1 = []
     val_f1 = []
-    best_model_weights = None
+    # best_model_weights = None
 
     for epoch in range(epochs):
         print('\n Epoch {}'.format(epoch))
@@ -55,7 +55,7 @@ def train_model(
                 model.eval() # Set model to evaluate mode
 
             dataloader = dataloaders[phase]
-            this_f1 = [0, 0, 0] # macro, micro, weighted
+            this_f1 = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]], dtype=np.float64)
             this_loss = 0
             iter_per_epoch = 0
             for iteration, (inputs, mask, labels) in enumerate(dataloader):
@@ -63,19 +63,20 @@ def train_model(
 
                 inputs = inputs.to(device=device)
                 mask = mask.to(device=device)
-                labels = labels.to(device=device)
+                labels = [l.to(device=device) for l in labels]
 
                 optimizer.zero_grad()
 
                 with torch.set_grad_enabled(phase == 'train'):
-                    loss, logits = model(inputs, mask, labels)
-                    # loss = criterion(logits, labels)
-                    y_pred = logits.argmax(dim=1)
-                    # acc = torch.sum(y_pred == labels).item() / logits.size(dim=0)
-                    this_loss += loss.item()
-                    this_f1[0] += f1_score(labels.cpu(), y_pred.cpu(), average='macro')
-                    this_f1[1] += f1_score(labels.cpu(), y_pred.cpu(), average='micro')
-                    this_f1[2] += f1_score(labels.cpu(), y_pred.cpu(), average='weighted')
+                    logits_list = model(inputs, mask)
+                    losses = np.array([criterions[i](logits_list[i], labels[i]) for i in range(3)])
+                    loss_weights = np.array([1.0, 1.0, 1.0]) / 3
+                    loss = sum(losses * loss_weights)
+                    y_preds = [logits_list[i].argmax(dim=1).cpu() for i in range(3)]
+                    this_loss += np.sum([loss.item() for loss in losses])
+
+                    for i in range(3):
+                        this_f1[i] += eval(labels[i].cpu(), y_preds[i])
 
                     if phase == 'train':
                         loss.backward()
@@ -86,15 +87,13 @@ def train_model(
                             print(f'Iteration {iteration}: loss = {loss:5f}')
 
             this_loss /= iter_per_epoch
-            this_f1[0] /= iter_per_epoch
-            this_f1[1] /= iter_per_epoch
-            this_f1[2] /= iter_per_epoch
+            this_f1 /= iter_per_epoch
 
             print('*' * 10)
-            print(f'Loss={this_loss:.5f}')
-            print(f'Macro-F1 = {this_f1[0]:.5f}')
-            print(f'Micro-F1 = {this_f1[1]:.5f}')
-            print(f'Weighted-F1 = {this_f1[2]:.5f}')
+            print(f'Loss        = {this_loss:.5f}')
+            print(f'Macro-F1    = {this_f1[0][0]:.5f}\t{this_f1[1][0]:.5f}\t{this_f1[2][0]:.5f}')
+            print(f'Micro-F1    = {this_f1[0][1]:.5f}\t{this_f1[1][1]:.5f}\t{this_f1[2][1]:.5f}')
+            print(f'Weighted-F1 = {this_f1[0][2]:.5f}\t{this_f1[1][2]:.5f}\t{this_f1[2][2]:.5f}')
             print('*' * 10)
 
             if phase == 'train':
@@ -106,35 +105,45 @@ def train_model(
                 patience_counter += 1
                 val_losses.append(this_loss)
                 val_f1.append(this_f1)
-                if this_f1[0] > best_val_f1:
-                    best_val_f1 = this_f1[0]
-                    patience_counter = 0
-                    best_model_weights = copy.deepcopy(model.state_dict())
-                elif patience_counter == patience:
-                    print('Stop training because running out of patience!')
-                    save((
-                        train_losses,
-                        val_losses,
-                        train_f1,
-                        val_f1,
-                        best_train_f1,
-                        best_val_f1
-                    ), f'{SAVE_PATH}/results_{task_name}_{model_name}_{datetimestr}.pt')
-                    exit(1)
+
+                # if this_f1[0] > best_val_f1:
+                #     best_val_f1 = this_f1[0]
+                #     patience_counter = 0
+                #     best_model_weights = copy.deepcopy(model.state_dict())
+                # elif patience_counter == patience:
+                #     print('Stop training because running out of patience!')
+                #     save((
+                #         train_losses,
+                #         val_losses,
+                #         train_f1,
+                #         val_f1,
+                #         best_train_f1,
+                #         best_val_f1
+                #     ), f'{SAVE_PATH}/results_{task_name}_{model_name}_{datetimestr}.pt')
+                #     exit(1)
         print()
 
-    save(best_model_weights, f'{SAVE_PATH}/best_model_weights_{task_name}_{model_name}_{datetimestr}.pt')
+    # save(best_model_weights, f'{SAVE_PATH}/best_model_weights_{task_name}_{model_name}_{datetimestr}.pt')
     save((
         train_losses,
         val_losses,
         train_f1,
         val_f1,
-        best_train_f1,
-        best_val_f1
+        # best_train_f1,
+        # best_val_f1
     ), f'{SAVE_PATH}/results_{task_name}_{model_name}_{datetimestr}.pt')
 
 
+def eval(y, y_pred):
+    f1s = []
+    f1s.append(f1_score(y.cpu(), y_pred.cpu(), average='macro'))
+    f1s.append(f1_score(y.cpu(), y_pred.cpu(), average='micro'))
+    f1s.append(f1_score(y.cpu(), y_pred.cpu(), average='weighted'))
+    return np.array(f1s)
+
+
 if __name__ == '__main__':
+
     # Get command line arguments
     args = get_args()
     task = args['task']
@@ -157,61 +166,54 @@ if __name__ == '__main__':
     os.environ["CUDA_VISIBLE_DEVICES"] = args['cuda']
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-    num_labels = 3 if task == 'c' else 2
+    # Move model to correct device
+    model = MTModel(model_name, model_size)
+    model = model.to(device=device)
 
     # Set tokenizer for different models
     if model_name == 'bert':
-        model = BERT(model_size, num_labels)
         tokenizer = BertTokenizer.from_pretrained(f'bert-{model_size}-uncased')
     elif model_name == 'roberta':
-        model = RoBERTa(model_size, num_labels)
         tokenizer = RobertaTokenizer.from_pretrained(f'roberta-{model_size}')
 
-    # Move model to correct device
-    model = model.to(device=device)
-
     # Read in data depends on different subtasks
-    data_methods = {'a': task_a, 'b': task_b, 'c': task_c, 'all': all_tasks}
-    label_orders = {'a': ['OFF', 'NOT'], 'b': ['TIN', 'UNT'], 'c': ['IND', 'GRP', 'OTH']}
-    try:
-        ids, token_ids, mask, labels = data_methods[task](TRAIN_PATH, tokenizer=tokenizer, truncate=truncate)
-        test_ids, test_token_ids, test_mask, test_labels = read_test_file(task, tokenizer=tokenizer, truncate=truncate)
-    except KeyError:
-        raise Exception('Incorrect task={}'.format(task))
+    ids, token_ids, mask, label_a, label_b, label_c = all_tasks(TRAIN_PATH, tokenizer=tokenizer, truncate=truncate)
+    test_ids, test_token_ids, test_mask, test_label_a, test_label_b, test_label_c = read_test_file_all(tokenizer)
+    labels = {'a': label_a, 'b': label_b, 'c': label_c}
+    test_labels = {'a': test_label_a, 'b': test_label_b, 'c': test_label_c}
+    label_orders = {'a': ['OFF', 'NOT'], 'b': ['TIN', 'UNT', 'NULL'], 'c': ['IND', 'GRP', 'OTH', 'NULL']}
 
-    cross_entropy_loss_weight = get_loss_weight(np.concatenate((labels, test_labels)), label_orders[task])
-    print(f'Label weights: {cross_entropy_loss_weight}')
+    cross_entropy_loss_weights = [get_loss_weight(np.concatenate((labels[t], test_labels[t])), label_orders[t]) for t in ['a', 'b', 'c']]
+    # print(f'Label weights: {cross_entropy_loss_weight}')
 
     dataloaders = {
         'train': DataLoader(
-            dataset=HuggingfaceDataset(
+            dataset=HuggingfaceMTDataset(
                 input_ids=token_ids,
                 mask=mask,
-                labels=labels,
-                task=task
+                labels=labels
             ),
             batch_size=bs,
             shuffle=True
         ),
         'val': DataLoader(
-            dataset=HuggingfaceDataset(
+            dataset=HuggingfaceMTDataset(
                 input_ids=test_token_ids,
                 mask=test_mask,
-                labels=test_labels,
-                task=task
+                labels=test_labels
             ),
             batch_size=bs
         )
     }
 
-    criterion = torch.nn.CrossEntropyLoss(weight=cross_entropy_loss_weight)
+    criterions = [torch.nn.CrossEntropyLoss(weight=w) for w in cross_entropy_loss_weights]
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=wd)
 
     train_model(
         model=model,
         epochs=epochs,
         dataloaders=dataloaders,
-        criterion=criterion,
+        criterions=criterions,
         optimizer=optimizer,
         scheduler=None,
         device=device,
