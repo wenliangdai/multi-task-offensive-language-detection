@@ -33,11 +33,11 @@ class MTModel(nn.Module):
     def __init__(self, model, model_size):
         super(MTModel, self).__init__()
         if model == 'bert':
-            pretrained = BertForSequenceClassification.from_pretrained(f'bert-{model_size}-uncased')
-            self.main = pretrained.bert
-            self.dropout = pretrained.dropout
+            self.pretrained = BertForSequenceClassification.from_pretrained(f'bert-{model_size}-uncased')
+            self.main = self.pretrained.bert
+            self.dropout = self.pretrained.dropout
         elif model == 'roberta':
-            self.main = RobertaForSequenceClassification.from_pretrained(f'roberta-{model_size}').roberta
+            self.pretrained = RobertaForSequenceClassification.from_pretrained(f'roberta-{model_size}').roberta
 
         # Freeze embeddings' parameters for saving memory
         for param in self.main.embeddings.parameters():
