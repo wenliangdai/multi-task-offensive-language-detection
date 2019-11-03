@@ -33,7 +33,7 @@ def train_model(
     # When patience_counter > patience, the training will stop
     patience_counter = 0
     # Statistics to record
-    best_train_f1 = 0
+    # best_train_f1 = 0
     # best_val_f1 = 0
     train_losses = []
     val_losses = []
@@ -99,8 +99,8 @@ def train_model(
             if phase == 'train':
                 train_losses.append(this_loss)
                 train_f1.append(this_f1)
-                if this_f1[0] > best_train_f1:
-                    best_train_f1 = this_f1[0]
+                # if this_f1[0] > best_train_f1:
+                #     best_train_f1 = this_f1[0]
             else:
                 patience_counter += 1
                 val_losses.append(this_loss)
