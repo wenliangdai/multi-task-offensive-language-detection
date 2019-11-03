@@ -206,7 +206,7 @@ if __name__ == '__main__':
         )
     }
 
-    criterions = [torch.nn.CrossEntropyLoss(weight=w) for w in cross_entropy_loss_weights]
+    criterions = [torch.nn.CrossEntropyLoss(weight=w.to(device=device)) for w in cross_entropy_loss_weights]
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=wd)
 
     train_model(

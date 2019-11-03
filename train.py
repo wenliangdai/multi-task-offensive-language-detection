@@ -204,7 +204,7 @@ if __name__ == '__main__':
         )
     }
 
-    criterion = torch.nn.CrossEntropyLoss(weight=cross_entropy_loss_weight)
+    criterion = torch.nn.CrossEntropyLoss(weight=cross_entropy_loss_weight.to(device=device))
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=wd)
 
     train_model(
