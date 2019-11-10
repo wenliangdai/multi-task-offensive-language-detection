@@ -1,138 +1,17 @@
 import os
-import copy
-import datetime
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
-from sklearn.metrics import f1_score
 from data import task_a, task_b, task_c, all_tasks, read_test_file
-from config import OLID_PATH, SAVE_PATH
+from config import OLID_PATH
 from cli import get_args
-from utils import save, get_loss_weight
-from datasets import HuggingfaceDataset
+# from utils import get_loss_weight
+from datasets import HuggingfaceDataset, ImbalancedDatasetSampler
 from models.bert import BERT, RoBERTa
 from transformers import BertTokenizer, RobertaTokenizer
-from typing import Dict, Any
+from trainer import Trainer
 
 TRAIN_PATH = os.path.join(OLID_PATH, 'olid-training-v1.0.tsv')
-datetimestr = datetime.datetime.now().strftime('%Y-%b-%d_%H:%M:%S')
-
-def train_model(
-    model: Any,
-    epochs: int,
-    dataloaders: Dict[str, DataLoader],
-    criterion: Any,
-    optimizer: Any,
-    scheduler: Any,
-    device: Any,
-    print_iter: int,
-    patience: int,
-    task_name: str,
-    model_name: str
-):
-    # When patience_counter > patience, the training will stop
-    patience_counter = 0
-    # Statistics to record
-    best_train_f1 = 0
-    best_val_f1 = 0
-    train_losses = []
-    val_losses = []
-    train_f1 = []
-    val_f1 = []
-    best_model_weights = None
-
-    for epoch in range(epochs):
-        print('\n Epoch {}'.format(epoch))
-        print('=' * 20)
-
-        for phase in ['train', 'val']:
-            print('Phase [{}]'.format(phase))
-            print('-' * 10)
-
-            if phase == 'train':
-                model.train() # Set model to training mode
-            else:
-                model.eval() # Set model to evaluate mode
-
-            dataloader = dataloaders[phase]
-            this_f1 = [0, 0, 0] # macro, micro, weighted
-            this_loss = 0
-            iter_per_epoch = 0
-            for iteration, (inputs, mask, labels) in enumerate(dataloader):
-                iter_per_epoch += 1
-
-                inputs = inputs.to(device=device)
-                mask = mask.to(device=device)
-                labels = labels.to(device=device)
-
-                optimizer.zero_grad()
-
-                with torch.set_grad_enabled(phase == 'train'):
-                    loss, logits = model(inputs, mask, labels)
-                    # loss = criterion(logits, labels)
-                    y_pred = logits.argmax(dim=1)
-                    # acc = torch.sum(y_pred == labels).item() / logits.size(dim=0)
-                    this_loss += loss.item()
-                    this_f1[0] += f1_score(labels.cpu(), y_pred.cpu(), average='macro')
-                    this_f1[1] += f1_score(labels.cpu(), y_pred.cpu(), average='micro')
-                    this_f1[2] += f1_score(labels.cpu(), y_pred.cpu(), average='weighted')
-
-                    if phase == 'train':
-                        loss.backward()
-                        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=10)
-                        optimizer.step()
-                        # scheduler.step()
-                        if iteration % print_iter == 0:
-                            print(f'Iteration {iteration}: loss = {loss:5f}')
-
-            this_loss /= iter_per_epoch
-            this_f1[0] /= iter_per_epoch
-            this_f1[1] /= iter_per_epoch
-            this_f1[2] /= iter_per_epoch
-
-            print('*' * 10)
-            print(f'Loss={this_loss:.5f}')
-            print(f'Macro-F1 = {this_f1[0]:.5f}')
-            print(f'Micro-F1 = {this_f1[1]:.5f}')
-            print(f'Weighted-F1 = {this_f1[2]:.5f}')
-            print('*' * 10)
-
-            if phase == 'train':
-                train_losses.append(this_loss)
-                train_f1.append(this_f1)
-                if this_f1[0] > best_train_f1:
-                    best_train_f1 = this_f1[0]
-            else:
-                patience_counter += 1
-                val_losses.append(this_loss)
-                val_f1.append(this_f1)
-                if this_f1[0] > best_val_f1:
-                    best_val_f1 = this_f1[0]
-                    patience_counter = 0
-                    best_model_weights = copy.deepcopy(model.state_dict())
-                elif patience_counter == patience:
-                    print('Stop training because running out of patience!')
-                    save((
-                        train_losses,
-                        val_losses,
-                        train_f1,
-                        val_f1,
-                        best_train_f1,
-                        best_val_f1
-                    ), f'{SAVE_PATH}/results_{task_name}_{model_name}_{datetimestr}.pt')
-                    exit(1)
-        print()
-
-    save(best_model_weights, f'{SAVE_PATH}/best_model_weights_{task_name}_{model_name}_{datetimestr}.pt')
-    save((
-        train_losses,
-        val_losses,
-        train_f1,
-        val_f1,
-        best_train_f1,
-        best_val_f1
-    ), f'{SAVE_PATH}/results_{task_name}_{model_name}_{datetimestr}.pt')
-
 
 if __name__ == '__main__':
     # Get command line arguments
@@ -149,7 +28,7 @@ if __name__ == '__main__':
     patience = args['patience']
 
     # Fix seed for reproducibility
-    seed = 1
+    seed = 19951126
     torch.manual_seed(seed)
     np.random.seed(seed)
 
@@ -179,35 +58,37 @@ if __name__ == '__main__':
     except KeyError:
         raise Exception('Incorrect task={}'.format(task))
 
-    cross_entropy_loss_weight = get_loss_weight(np.concatenate((labels, test_labels)), label_orders[task])
-    print(f'Label weights: {cross_entropy_loss_weight}')
+    # cross_entropy_loss_weight = get_loss_weight(np.concatenate((labels, test_labels)), label_orders[task])
 
-    dataloaders = {
-        'train': DataLoader(
-            dataset=HuggingfaceDataset(
-                input_ids=token_ids,
-                mask=mask,
-                labels=labels,
-                task=task
-            ),
-            batch_size=bs,
-            shuffle=True
+    datasets = {
+        'train': HuggingfaceDataset(
+            input_ids=token_ids,
+            mask=mask,
+            labels=labels,
+            task=task
         ),
-        'val': DataLoader(
-            dataset=HuggingfaceDataset(
-                input_ids=test_token_ids,
-                mask=test_mask,
-                labels=test_labels,
-                task=task
-            ),
-            batch_size=bs
+        'test': HuggingfaceDataset(
+            input_ids=test_token_ids,
+            mask=test_mask,
+            labels=test_labels,
+            task=task
         )
     }
 
-    criterion = torch.nn.CrossEntropyLoss(weight=cross_entropy_loss_weight.to(device=device))
+    dataloaders = {
+        'train': DataLoader(
+            dataset=datasets['train'],
+            batch_size=bs,
+            # shuffle=True,
+            sampler=ImbalancedDatasetSampler(datasets['train'])
+        ),
+        'test': DataLoader(dataset=datasets['test'], batch_size=bs)
+    }
+
+    criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=wd)
 
-    train_model(
+    trainer = Trainer(
         model=model,
         epochs=epochs,
         dataloaders=dataloaders,
@@ -220,3 +101,4 @@ if __name__ == '__main__':
         task_name=task,
         model_name=model_name
     )
+    trainer.train()

@@ -13,7 +13,8 @@ class BERT(nn.Module):
     def forward(self, inputs, mask, labels):
         outputs = self.model(inputs, attention_mask=mask, labels=labels)
         loss, logits = outputs[:2]
-        return loss, logits
+        # return loss, logits
+        return logits
 
 class RoBERTa(nn.Module):
     def __init__(self, model_size, num_labels=2):
@@ -27,7 +28,8 @@ class RoBERTa(nn.Module):
     def forward(self, inputs, mask, labels):
         outputs = self.model(inputs, attention_mask=mask, labels=labels)
         loss, logits = outputs[:2]
-        return loss, logits
+        # return loss, logits
+        return logits
 
 class MTModel(nn.Module):
     def __init__(self, model, model_size):

@@ -71,7 +71,8 @@ def train_model(
                     logits_list = model(inputs, mask)
                     losses = np.array([criterions[i](logits_list[i], labels[i]) for i in range(3)])
                     loss_weights = np.array([1.0, 1.0, 1.0]) / 3
-                    loss = sum(losses * loss_weights)
+                    losses = losses * loss_weights
+                    loss = losses[0] + losses[1] + losses[2]
                     y_preds = [logits_list[i].argmax(dim=1).cpu() for i in range(3)]
                     this_loss += np.sum([loss.item() for loss in losses])
 
