@@ -40,6 +40,8 @@ class Trainer():
 
         self.train_losses = []
         self.test_losses = []
+        self.train_f1 = []
+        self.test_f1 = []
         self.best_train_f1 = np.array([0, 0, 0], dtype=np.float64)
         self.best_test_f1 = np.array([0, 0, 0], dtype=np.float64)
 
@@ -143,9 +145,9 @@ class Trainer():
         )
         save((
             self.train_losses,
-            self.val_losses,
+            self.test_losses,
             self.train_f1,
-            self.val_f1,
+            self.test_f1,
             self.best_train_f1,
-            self.best_val_f1
+            self.best_test_f1
         ), f'./save/results_{self.task_name}_{self.model_name}_{datetimestr}.pt')
