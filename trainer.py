@@ -47,9 +47,14 @@ class Trainer():
 
     def train(self):
         for epoch in range(self.epochs):
+            print(f'Epoch {epoch}')
+            print('=' * 20)
+            print('Training...')
             self.train_one_epoch()
+            print('Testing...')
             self.test()
-            print(f'Best test results: {self.best_test_f1[0]:4f}, {self.best_test_f1[1]:4f}, {self.best_test_f1[2]:4f}')
+            print(f'Best test results: {self.best_test_f1[0]:4f}, {self.best_test_f1[1]:4f}, {self.best_test_f1[2]:4f}\n')
+            print('=' * 20)
 
     def train_one_epoch(self):
         self.model.train()
