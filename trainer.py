@@ -80,7 +80,7 @@ class Trainer():
                 if self.scheduler is not None:
                     self.scheduler.step()
                 if iteration % self.print_iter == 0:
-                    print(f'Iteration {iteration}: loss = {loss:4f}')
+                    print(f'Iteration {iteration}: loss = {_loss:4f}')
 
         loss /= iters_per_epoch
         f1 /= iters_per_epoch
@@ -96,7 +96,7 @@ class Trainer():
     def test(self):
         self.model.eval()
         dataloader = self.dataloaders['test']
-        f1 = np.array([0, 0, 0]) # [macro, micro, weighted]
+        f1 = np.array([0, 0, 0], np.float64) # [macro, micro, weighted]
         loss = 0
         iters_per_epoch = 0
         for iteration, (inputs, mask, labels) in enumerate(dataloader):
