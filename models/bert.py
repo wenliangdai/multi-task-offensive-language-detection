@@ -103,14 +103,41 @@ class GatedModel(nn.Module):
             self.classifier_b = nn.Linear(in_features=self.hidden_size, out_features=3, bias=True)
             self.classifier_c = nn.Linear(in_features=self.hidden_size, out_features=4, bias=True)
 
-        # elif model == 'roberta':
-        #     self.pretrained = RobertaForSequenceClassification.from_pretrained(f'roberta-{model_size}').roberta
-        #     self.main = pretrained.bert
-        #     self.dropout = pretrained.dropout
-        #     self.hidden_size = 1024
-        #     # Freeze embeddings' parameters for saving memory
-        #     for param in self.main.embeddings.parameters():
-        #         param.requires_grad = False
+        elif model == 'roberta':
+            self.pretrainedA = RobertaForSequenceClassification.from_pretrained(f'roberta-{model_size}')
+            self.mainA = pretrainedA.bert
+            self.pretrainedB = RobertaForSequenceClassification.from_pretrained(f'roberta-{model_size}')
+            self.mainB = pretrainedB.bert
+            self.pretrainedC = RobertaForSequenceClassification.from_pretrained(f'roberta-{model_size}')
+            self.mainC = pretraineC.bert
+            
+            # Freeze embeddings' parameters for saving memory
+            for p in [
+                # *self.model.robe
+                *self.mainA.embeddings.word_embeddings.parameters(),
+                *self.mainB.embeddings.word_embeddings.parameters(),
+                *self.mainC.embeddings.word_embeddings.parameters(),
+            ]:
+                p.requires_grad=False
+            
+            self.dropoutA = pretrainedA.dropout
+            self.dropoutB = pretrainedB.dropout
+            self.dropoutC = pretrainedC.dropout
+
+            self.hidden_size = 1024
+
+            self.linearA = nn.Linear(in_features=self.hidden_size*3, out_features=self.hidden_size, bias=True)
+            self.linearB = nn.Linear(in_features=self.hidden_size*3, out_features=self.hidden_size, bias=True)
+            self.linearC = nn.Linear(in_features=self.hidden_size*3, out_features=self.hidden_size, bias=True)
+
+            self.softmaxA = nn.Softmax(dim=1)
+            self.softmaxB = nn.Softmax(dim=1)
+            self.softmaxC = nn.Softmax(dim=1)
+            
+            self.classifier_a = nn.Linear(in_features=self.hidden_size, out_features=2, bias=True)
+            self.classifier_b = nn.Linear(in_features=self.hidden_size, out_features=3, bias=True)
+            self.classifier_c = nn.Linear(in_features=self.hidden_size, out_features=4, bias=True)
+            
     
     def forward(self, inputs, mask):
         outputsA = self.mainA(inputs, attention_mask=mask)
