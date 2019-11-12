@@ -39,7 +39,9 @@ class MTModel(nn.Module):
             self.main = pretrained.bert
             self.dropout = pretrained.dropout
         elif model == 'roberta':
-            self.pretrained = RobertaForSequenceClassification.from_pretrained(f'roberta-{model_size}').roberta
+            pretrained = RobertaForSequenceClassification.from_pretrained(f'roberta-{model_size}')
+            self.main = pretrained.roberta
+            self.dropout = pretrained.dropout
 
         # Freeze embeddings' parameters for saving memory
         for param in self.main.embeddings.parameters():
@@ -52,9 +54,9 @@ class MTModel(nn.Module):
     def forward(self, inputs, mask):
         outputs = self.main(inputs, attention_mask=mask)
         pooled_output = outputs[1]
-        logits_list = [
-            self.classifier_a(pooled_output),
-            self.classifier_b(pooled_output),
-            self.classifier_c(pooled_output)
-        ] # logits for 3 tasks
-        return logits_list
+        pooled_output = self.dropout(pooled_output)
+        # logits for 3 sub-tasks
+        logits_A = self.classifier_a(pooled_output)
+        logits_B = self.classifier_b(pooled_output)
+        logits_C = self.classifier_c(pooled_output)
+        return logits_A, logits_B, logits_C

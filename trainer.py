@@ -12,6 +12,11 @@ from sklearn.metrics import f1_score
 from utils import save
 
 class Trainer():
+    '''
+    The trainer for training models.
+    It can be used for both single and multi task training.
+    Every class function ends with _m is for multi-task training.
+    '''
     def __init__(
         self,
         model: nn.Module,
@@ -38,12 +43,25 @@ class Trainer():
         self.task_name = task_name
         self.model_name = model_name
 
+        # Evaluation results
         self.train_losses = []
         self.test_losses = []
         self.train_f1 = []
         self.test_f1 = []
         self.best_train_f1 = np.array([0, 0, 0], dtype=np.float64)
         self.best_test_f1 = np.array([0, 0, 0], dtype=np.float64)
+
+        # Evaluation results for multi-task
+        self.best_train_f1_m = np.array([
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0]
+        ], dtype=np.float64)
+        self.best_test_f1_m = np.array([
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0]
+        ], dtype=np.float64)
 
     def train(self):
         for epoch in range(self.epochs):
@@ -53,7 +71,7 @@ class Trainer():
             self.train_one_epoch()
             print('Testing...')
             self.test()
-            print(f'Best test results: {self.best_test_f1[0]:4f}, {self.best_test_f1[1]:4f}, {self.best_test_f1[2]:4f}\n')
+            print(f'Best test results: {self.best_test_f1[0]:.4f}, {self.best_test_f1[1]:.4f}, {self.best_test_f1[2]:.4f}')
             print('=' * 20)
 
     def train_one_epoch(self):
@@ -85,7 +103,7 @@ class Trainer():
                 if self.scheduler is not None:
                     self.scheduler.step()
                 if iteration % self.print_iter == 0:
-                    print(f'Iteration {iteration}: loss = {_loss:4f}')
+                    print(f'Iteration {iteration}: loss = {_loss:.4f}')
 
         loss /= iters_per_epoch
         f1 /= iters_per_epoch
@@ -128,6 +146,126 @@ class Trainer():
         for i in range(len(f1)):
             if f1[i] > self.best_test_f1[i]:
                 self.best_test_f1[i] = f1[i]
+
+    def train_m(self):
+        for epoch in range(self.epochs):
+            print(f'Epoch {epoch}')
+            print('=' * 20)
+            print('Training...')
+            self.train_one_epoch_m()
+            print('Testing...')
+            self.test_m()
+            print(f'Best test results A: {self.best_test_f1_m[0][0]:.4f}, {self.best_test_f1_m[0][1]:.4f}, {self.best_test_f1_m[0][2]:.4f}')
+            print(f'Best test results B: {self.best_test_f1_m[1][0]:.4f}, {self.best_test_f1_m[1][1]:.4f}, {self.best_test_f1_m[1][2]:.4f}')
+            print(f'Best test results C: {self.best_test_f1_m[2][0]:.4f}, {self.best_test_f1_m[2][1]:.4f}, {self.best_test_f1_m[2][2]:.4f}')
+            print('=' * 20)
+
+    def train_one_epoch_m(self):
+        self.model.train()
+        dataloader = self.dataloaders['train']
+        f1 = np.array([
+            [0, 0, 0], # [macro, micro, weighted]
+            [0, 0, 0],
+            [0, 0, 0]
+        ], dtype=np.float64)
+        loss = 0
+        iters_per_epoch = 0
+        for iteration, (inputs, mask, label_A, label_B, label_C) in enumerate(dataloader):
+            iters_per_epoch += 1
+
+            inputs = inputs.to(device=self.device)
+            mask = mask.to(device=self.device)
+            label_A = label_A.to(device=self.device)
+            label_B = label_B.to(device=self.device)
+            label_C = label_C.to(device=self.device)
+
+            self.optimizer.zero_grad()
+
+            with torch.set_grad_enabled(True):
+                # Forward
+                logits_A, logits_B, logits_C = self.model(inputs, mask)
+                y_pred_A = logits_A.argmax(dim=1)
+                y_pred_B = logits_B.argmax(dim=1)
+                y_pred_C = logits_C.argmax(dim=1)
+
+                _loss = (self.criterion(logits_A, label_A) +
+                         self.criterion(logits_B, label_B) +
+                         self.criterion(logits_C, label_C))
+                loss += _loss.item()
+                f1[0] += self.calc_f1(label_A, y_pred_A)
+                f1[1] += self.calc_f1(label_B, y_pred_B)
+                f1[2] += self.calc_f1(label_C, y_pred_C)
+                # Backward
+                _loss.backward()
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=10)
+                self.optimizer.step()
+                if self.scheduler is not None:
+                    self.scheduler.step()
+                if iteration % self.print_iter == 0:
+                    print(f'Iteration {iteration}: loss = {_loss:.4f}')
+
+        loss /= iters_per_epoch
+        f1 /= iters_per_epoch
+
+        print(f'Loss={loss:.4f}')
+        print(f'A: {f1[0][0]:.4f}, {f1[0][1]:.4f}, {f1[0][2]:.4f}')
+        print(f'B: {f1[1][0]:.4f}, {f1[1][1]:.4f}, {f1[1][2]:.4f}')
+        print(f'C: {f1[2][0]:.4f}, {f1[2][1]:.4f}, {f1[2][2]:.4f}')
+
+        self.train_losses.append(loss)
+        self.train_f1.append(f1)
+        for i in range(len(f1)):
+            for j in range(len(f1[0])):
+                if f1[i][j] > self.best_train_f1_m[i][j]:
+                    self.best_train_f1_m[i][j] = f1[i][j]
+
+    def test_m(self):
+        self.model.eval()
+        dataloader = self.dataloaders['test']
+        f1 = np.array([
+            [0, 0, 0], # [macro, micro, weighted]
+            [0, 0, 0],
+            [0, 0, 0]
+        ], dtype=np.float64)
+        loss = 0
+        iters_per_epoch = 0
+        for iteration, (inputs, mask, label_A, label_B, label_C) in enumerate(dataloader):
+            iters_per_epoch += 1
+
+            inputs = inputs.to(device=self.device)
+            mask = mask.to(device=self.device)
+            label_A = label_A.to(device=self.device)
+            label_B = label_B.to(device=self.device)
+            label_C = label_C.to(device=self.device)
+
+            with torch.set_grad_enabled(False):
+                logits_A, logits_B, logits_C = self.model(inputs, mask)
+                y_pred_A = logits_A.argmax(dim=1)
+                y_pred_B = logits_B.argmax(dim=1)
+                y_pred_C = logits_C.argmax(dim=1)
+
+                _loss = (self.criterion(logits_A, label_A) +
+                         self.criterion(logits_B, label_B) +
+                         self.criterion(logits_C, label_C))
+                loss += _loss.item()
+                f1[0] += self.calc_f1(label_A, y_pred_A)
+                f1[1] += self.calc_f1(label_B, y_pred_B)
+                f1[2] += self.calc_f1(label_C, y_pred_C)
+
+        loss /= iters_per_epoch
+        f1 /= iters_per_epoch
+
+        print(f'Loss={loss:.4f}')
+        print(f'A: {f1[0][0]:.4f}, {f1[0][1]:.4f}, {f1[0][2]:.4f}')
+        print(f'B: {f1[1][0]:.4f}, {f1[1][1]:.4f}, {f1[1][2]:.4f}')
+        print(f'C: {f1[2][0]:.4f}, {f1[2][1]:.4f}, {f1[2][2]:.4f}')
+
+        self.test_losses.append(loss)
+        self.test_f1.append(f1)
+        for i in range(len(f1)):
+            for j in range(len(f1[0])):
+                if f1[i][j] > self.best_test_f1_m[i][j]:
+                    self.best_test_f1_m[i][j] = f1[i][j]
 
     def calc_f1(self, labels, y_pred):
         return np.array([

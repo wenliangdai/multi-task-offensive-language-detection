@@ -2,12 +2,12 @@ import os
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
-from data import task_a, task_b, task_c, all_tasks, read_test_file
+from data import task_a, task_b, task_c, all_tasks, read_test_file, read_test_file_all
 from config import OLID_PATH
 from cli import get_args
 # from utils import get_loss_weight
-from datasets import HuggingfaceDataset, ImbalancedDatasetSampler
-from models.bert import BERT, RoBERTa
+from datasets import HuggingfaceDataset, HuggingfaceMTDataset, ImbalancedDatasetSampler
+from models.bert import BERT, RoBERTa, MTModel
 from transformers import BertTokenizer, RobertaTokenizer
 from trainer import Trainer
 
@@ -39,35 +39,45 @@ if __name__ == '__main__':
     num_labels = 3 if task == 'c' else 2
 
     # Set tokenizer for different models
+
     if model_name == 'bert':
-        model = BERT(model_size, num_labels)
+        if task == 'all':
+            model = MTModel(model_name, model_size)
+        else:
+            model = BERT(model_size, num_labels)
         tokenizer = BertTokenizer.from_pretrained(f'bert-{model_size}-uncased')
     elif model_name == 'roberta':
-        model = RoBERTa(model_size, num_labels)
+        if task == 'all':
+            model = MTModel(model_name, model_size)
+        else:
+            model = RoBERTa(model_size, num_labels)
         tokenizer = RobertaTokenizer.from_pretrained(f'roberta-{model_size}')
 
     # Move model to correct device
     model = model.to(device=device)
 
     # Read in data depends on different subtasks
-    data_methods = {'a': task_a, 'b': task_b, 'c': task_c, 'all': all_tasks}
-    label_orders = {'a': ['OFF', 'NOT'], 'b': ['TIN', 'UNT'], 'c': ['IND', 'GRP', 'OTH']}
-    try:
+    # label_orders = {'a': ['OFF', 'NOT'], 'b': ['TIN', 'UNT'], 'c': ['IND', 'GRP', 'OTH']}
+    if task in ['a', 'b', 'c']:
+        data_methods = {'a': task_a, 'b': task_b, 'c': task_c, 'all': all_tasks}
         ids, token_ids, mask, labels = data_methods[task](TRAIN_PATH, tokenizer=tokenizer, truncate=truncate)
         test_ids, test_token_ids, test_mask, test_labels = read_test_file(task, tokenizer=tokenizer, truncate=truncate)
-    except KeyError:
-        raise Exception('Incorrect task={}'.format(task))
-
-    # cross_entropy_loss_weight = get_loss_weight(np.concatenate((labels, test_labels)), label_orders[task])
+        _Dataset = HuggingfaceDataset
+    elif task == 'all':
+        ids, token_ids, mask, label_a, label_b, label_c = all_tasks(TRAIN_PATH, tokenizer=tokenizer, truncate=truncate)
+        test_ids, test_token_ids, test_mask, test_label_a, test_label_b, test_label_c = read_test_file_all(tokenizer)
+        labels = {'a': label_a, 'b': label_b, 'c': label_c}
+        test_labels = {'a': test_label_a, 'b': test_label_b, 'c': test_label_c}
+        _Dataset = HuggingfaceMTDataset
 
     datasets = {
-        'train': HuggingfaceDataset(
+        'train': _Dataset(
             input_ids=token_ids,
             mask=mask,
             labels=labels,
             task=task
         ),
-        'test': HuggingfaceDataset(
+        'test': _Dataset(
             input_ids=test_token_ids,
             mask=test_mask,
             labels=test_labels,
@@ -75,12 +85,12 @@ if __name__ == '__main__':
         )
     }
 
+    sampler = ImbalancedDatasetSampler(datasets['train']) if task in ['a', 'b', 'c'] else None
     dataloaders = {
         'train': DataLoader(
             dataset=datasets['train'],
             batch_size=bs,
-            # shuffle=True,
-            sampler=ImbalancedDatasetSampler(datasets['train'])
+            sampler=sampler
         ),
         'test': DataLoader(dataset=datasets['test'], batch_size=bs)
     }
@@ -101,4 +111,7 @@ if __name__ == '__main__':
         task_name=task,
         model_name=model_name
     )
-    trainer.train()
+    if task in ['a', 'b', 'c']:
+        trainer.train()
+    else:
+        trainer.train_m()
