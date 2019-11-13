@@ -88,8 +88,10 @@ class GatedModel(nn.Module):
             self.dropoutA = pretrainedA.dropout
             self.dropoutB = pretrainedB.dropout
             self.dropoutC = pretrainedC.dropout
-
-            self.hidden_size = 768
+            if model_size == 'base':
+                self.hidden_size = 768
+            if model_size == 'large':
+                self.hidden_size = 1024
 
             self.linearA = nn.Linear(in_features=self.hidden_size*3, out_features=self.hidden_size, bias=True)
             self.linearB = nn.Linear(in_features=self.hidden_size*3, out_features=self.hidden_size, bias=True)
@@ -104,12 +106,12 @@ class GatedModel(nn.Module):
             self.classifier_c = nn.Linear(in_features=self.hidden_size, out_features=4, bias=True)
 
         elif model == 'roberta':
-            self.pretrainedA = RobertaForSequenceClassification.from_pretrained(f'roberta-{model_size}')
-            self.mainA = pretrainedA.bert
-            self.pretrainedB = RobertaForSequenceClassification.from_pretrained(f'roberta-{model_size}')
-            self.mainB = pretrainedB.bert
-            self.pretrainedC = RobertaForSequenceClassification.from_pretrained(f'roberta-{model_size}')
-            self.mainC = pretraineC.bert
+            pretrainedA = RobertaForSequenceClassification.from_pretrained(f'roberta-{model_size}')
+            self.mainA = pretrainedA.roberta
+            pretrainedB = RobertaForSequenceClassification.from_pretrained(f'roberta-{model_size}')
+            self.mainB = pretrainedB.roberta
+            pretrainedC = RobertaForSequenceClassification.from_pretrained(f'roberta-{model_size}')
+            self.mainC = pretrainedC.roberta
             
             # Freeze embeddings' parameters for saving memory
             for p in [
@@ -120,11 +122,14 @@ class GatedModel(nn.Module):
             ]:
                 p.requires_grad=False
             
-            self.dropoutA = pretrainedA.dropout
-            self.dropoutB = pretrainedB.dropout
-            self.dropoutC = pretrainedC.dropout
+            self.dropoutA = pretrainedA.classifier
+            self.dropoutB = pretrainedB.classifier
+            self.dropoutC = pretrainedC.classifier
 
-            self.hidden_size = 1024
+            if model_size == 'base':
+                self.hidden_size = 768
+            if model_size == 'large':
+                self.hidden_size = 1024
 
             self.linearA = nn.Linear(in_features=self.hidden_size*3, out_features=self.hidden_size, bias=True)
             self.linearB = nn.Linear(in_features=self.hidden_size*3, out_features=self.hidden_size, bias=True)
@@ -142,15 +147,15 @@ class GatedModel(nn.Module):
     def forward(self, inputs, mask):
         outputsA = self.mainA(inputs, attention_mask=mask)
         pooled_outputA = outputsA[1]
-        pooled_outputA = self.dropoutA(pooled_outputA) # batch_size * hidden_size
+        # pooled_outputA = self.dropoutA(pooled_outputA) # batch_size * hidden_size
         
         outputsB = self.mainB(inputs, attention_mask=mask)
         pooled_outputB = outputsB[1]
-        pooled_outputB = self.dropoutB(pooled_outputB) # batch_size * hidden_size
+        # pooled_outputB = self.dropoutB(pooled_outputB) # batch_size * hidden_size
         
         outputsC = self.mainC(inputs, attention_mask=mask)
         pooled_outputC = outputsC[1]
-        pooled_outputC = self.dropoutC(pooled_outputC) # batch_size * hidden_size
+        # pooled_outputC = self.dropoutC(pooled_outputC) # batch_size * hidden_size
         
         gateA = self.softmaxA(self.linearA(torch.cat((pooled_outputA, pooled_outputB, pooled_outputC), 1)))
         gateB = self.softmaxB(self.linearB(torch.cat((pooled_outputA, pooled_outputB, pooled_outputC), 1)))
