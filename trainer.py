@@ -1,7 +1,7 @@
 # Built-in libraries
 import copy
 import datetime
-from typing import Dict
+from typing import Dict, List
 # Third-party libraries
 import numpy as np
 import torch
@@ -23,6 +23,7 @@ class Trainer():
         epochs: int,
         dataloaders: Dict[str, DataLoader],
         criterion: nn.Module,
+        loss_weights: List[float],
         optimizer: torch.optim.Optimizer,
         scheduler: torch.optim.lr_scheduler,
         device: str,
@@ -35,6 +36,7 @@ class Trainer():
         self.epochs = epochs
         self.dataloaders = dataloaders
         self.criterion = criterion
+        self.loss_weights = loss_weights
         self.optimizer = optimizer
         self.scheduler = scheduler
         self.device = device
@@ -188,9 +190,10 @@ class Trainer():
                 y_pred_B = logits_B.argmax(dim=1)
                 y_pred_C = logits_C.argmax(dim=1)
 
-                _loss = (self.criterion(logits_A, label_A) +
-                         self.criterion(logits_B, label_B) +
-                         self.criterion(logits_C, label_C))
+                _loss = self.loss_weights[0] * self.criterion(logits_A, label_A)
+                _loss += self.loss_weights[1] * self.criterion(logits_B, label_B)
+                _loss += self.loss_weights[2] * self.criterion(logits_C, label_C)
+
                 loss += _loss.item()
                 f1[0] += self.calc_f1(label_A, y_pred_A)
                 f1[1] += self.calc_f1(label_B, y_pred_B)
