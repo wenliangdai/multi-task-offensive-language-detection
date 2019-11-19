@@ -7,7 +7,7 @@ from config import OLID_PATH
 from cli import get_args
 # from utils import get_loss_weight
 from datasets import HuggingfaceDataset, HuggingfaceMTDataset, ImbalancedDatasetSampler
-from models.bert import BERT, RoBERTa, MTModel
+from models.bert import BERT, RoBERTa, MTModel, BERT_LSTM, BERT_LSTM_MTL
 from transformers import BertTokenizer, RobertaTokenizer
 from trainer import Trainer
 
@@ -42,9 +42,9 @@ if __name__ == '__main__':
 
     if model_name == 'bert':
         if task == 'all':
-            model = MTModel(model_name, model_size)
+            model = BERT_LSTM_MTL(model_name, model_size)
         else:
-            model = BERT(model_size, num_labels)
+            model = BERT_LSTM(model_size, num_labels)
         tokenizer = BertTokenizer.from_pretrained(f'bert-{model_size}-uncased')
     elif model_name == 'roberta':
         if task == 'all':

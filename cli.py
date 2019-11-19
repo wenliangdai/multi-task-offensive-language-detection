@@ -15,6 +15,8 @@ def get_args():
     parser.add_argument('-ta', '--task', help='Which subtask to run', type=str, required=True)
     parser.add_argument('-mo', '--model', help='Which model to use', type=str, required=True)
     parser.add_argument('-ms', '--model_size', help='Which size of model to use', type=str, required=False, default='base')
+    parser.add_argument('-cl', '--clip', help='Using clip to gradients', type=bool, required=False, default=False)
+    parser.add_argument('-fr', '--freeze', help='Freeze the embedding layer or not to use less GPU memory', type=bool, required=False, default=False)
 
     args = vars(parser.parse_args())
     return args
