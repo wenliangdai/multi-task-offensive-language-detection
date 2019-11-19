@@ -24,6 +24,7 @@ class Trainer():
         dataloaders: Dict[str, DataLoader],
         criterion: nn.Module,
         loss_weights: List[float],
+        clip: bool,
         optimizer: torch.optim.Optimizer,
         scheduler: torch.optim.lr_scheduler,
         device: str,
@@ -37,6 +38,7 @@ class Trainer():
         self.dataloaders = dataloaders
         self.criterion = criterion
         self.loss_weights = loss_weights
+        self.clip = clip
         self.optimizer = optimizer
         self.scheduler = scheduler
         self.device = device
@@ -100,7 +102,7 @@ class Trainer():
                 f1 += self.calc_f1(labels, y_pred)
                 # Backward
                 _loss.backward()
-                if self.args['clip']:
+                if self.clip:
                     torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=10)
                 self.optimizer.step()
                 if self.scheduler is not None:
@@ -201,7 +203,7 @@ class Trainer():
                 f1[2] += self.calc_f1(label_C, y_pred_C)
                 # Backward
                 _loss.backward()
-                if self.args['clip']:
+                if self.clip:
                     torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=10)
                 self.optimizer.step()
                 if self.scheduler is not None:

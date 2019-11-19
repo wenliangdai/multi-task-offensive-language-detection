@@ -114,6 +114,7 @@ if __name__ == '__main__':
         dataloaders=dataloaders,
         criterion=criterion,
         loss_weights=args['loss_weights'],
+        clip=args['clip'],
         optimizer=optimizer,
         scheduler=None,
         device=device,

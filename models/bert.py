@@ -84,10 +84,11 @@ class MTModel(nn.Module):
         return logits_A, logits_B, logits_C
 
 class BERT_LSTM(nn.Module):
-    def __init__(self, model_size, num_labels, args, input_size=768):
+    def __init__(self, model_size, num_labels, args):
         super(BERT_LSTM, self).__init__()
         hidden_size = args['hidden_size']
         self.concat = args['hidden_combine_method'] == 'concat'
+        input_size = 768 if model_size == 'base' else 1024
 
         self.emb = BertModel.from_pretrained(
             f'bert-{model_size}-uncased',
