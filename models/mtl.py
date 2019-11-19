@@ -12,11 +12,13 @@ class MTL_Transformer_LSTM(nn.Module):
 
         if model == 'bert':
             MODEL = BertModel
+            model_full_name = f'{model}-{model_size}-uncased'
         elif model == 'roberta':
             MODEL = RobertaModel
+            model_full_name = f'{model}-{model_size}'
 
         self.emb = MODEL.from_pretrained(
-            f'{model}-{model_size}-uncased',
+            model_full_name,
             hidden_dropout_prob=args['hidden_dropout'],
             attention_probs_dropout_prob=args['attention_dropout']
         )
