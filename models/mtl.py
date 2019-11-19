@@ -67,17 +67,17 @@ class MTL_Transformer_LSTM(nn.Module):
 
         _, (logits_b, _) = self.LSTMs['b'](embs)
         if self.concat:
-            logits_a = torch.cat((logits_a[0], logits_a[1]), dim=1)
+            logits_b = torch.cat((logits_b[0], logits_b[1]), dim=1)
         else:
-            logits_a = logits_a[0] + logits_a[1]
+            logits_b = logits_b[0] + logits_b[1]
         logits_b = self.dropout(logits_b)
         logits_b = self.Linears['b'](logits_b)
 
         _, (logits_c, _) = self.LSTMs['c'](embs)
         if self.concat:
-            logits_a = torch.cat((logits_a[0], logits_a[1]), dim=1)
+            logits_c = torch.cat((logits_c[0], logits_c[1]), dim=1)
         else:
-            logits_a = logits_a[0] + logits_a[1]
+            logits_c = logits_c[0] + logits_c[1]
         logits_c = self.dropout(logits_c)
         logits_c = self.Linears['c'](logits_c)
 
