@@ -100,7 +100,8 @@ class Trainer():
                 f1 += self.calc_f1(labels, y_pred)
                 # Backward
                 _loss.backward()
-                torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=10)
+                if self.args['clip']:
+                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=10)
                 self.optimizer.step()
                 if self.scheduler is not None:
                     self.scheduler.step()
@@ -200,7 +201,8 @@ class Trainer():
                 f1[2] += self.calc_f1(label_C, y_pred_C)
                 # Backward
                 _loss.backward()
-                torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=10)
+                if self.args['clip']:
+                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=10)
                 self.optimizer.step()
                 if self.scheduler is not None:
                     self.scheduler.step()
