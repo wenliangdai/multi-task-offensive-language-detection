@@ -7,7 +7,7 @@ from config import OLID_PATH
 from cli import get_args
 # from utils import get_loss_weight
 from datasets import HuggingfaceDataset, HuggingfaceMTDataset, ImbalancedDatasetSampler
-from models.bert import BERT, RoBERTa, MTModel, BERT_LSTM, BERT_LSTM_MTL
+from models.bert import BERT, RoBERTa, MTModel, BERT_LSTM, BERT_LSTM_MTL, GatedModel
 from transformers import BertTokenizer, RobertaTokenizer
 from trainer import Trainer
 
@@ -52,6 +52,14 @@ if __name__ == '__main__':
         else:
             model = RoBERTa(model_size, num_labels)
         tokenizer = RobertaTokenizer.from_pretrained(f'roberta-{model_size}')
+    elif model_name == 'bert-gate' and task == 'all':
+        model_name = model_name.replace('-gate', '')
+        model = GatedModel(model_name, model_size)
+        tokenizer = BertTokenizer.from_pretrained(f'bert-{model_size}-uncased')
+    elif model_name == 'roberta-gate' and task == 'all':
+        model_name = model_name.replace('-gate', '')
+        model = GatedModel(model_name, model_size)
+        tokenizer = RobertaTokenizer.from_pretrained(f'roberta-{model_size}')
 
     # Move model to correct device
     model = model.to(device=device)
@@ -63,7 +71,7 @@ if __name__ == '__main__':
         ids, token_ids, mask, labels = data_methods[task](TRAIN_PATH, tokenizer=tokenizer, truncate=truncate)
         test_ids, test_token_ids, test_mask, test_labels = read_test_file(task, tokenizer=tokenizer, truncate=truncate)
         _Dataset = HuggingfaceDataset
-    elif task == 'all':
+    elif task in ['all']:
         ids, token_ids, mask, label_a, label_b, label_c = all_tasks(TRAIN_PATH, tokenizer=tokenizer, truncate=truncate)
         test_ids, test_token_ids, test_mask, test_label_a, test_label_b, test_label_c = read_test_file_all(tokenizer)
         labels = {'a': label_a, 'b': label_b, 'c': label_c}
