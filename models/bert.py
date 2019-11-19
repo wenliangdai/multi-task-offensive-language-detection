@@ -4,9 +4,14 @@ from transformers import BertModel, BertForSequenceClassification, RobertaForSeq
 
 
 class BERT(nn.Module):
-    def __init__(self, model_size, num_labels=2):
+    def __init__(self, model_size, args, num_labels=2):
         super(BERT, self).__init__()
-        self.model = BertForSequenceClassification.from_pretrained(f'bert-{model_size}-uncased', num_labels=num_labels)
+        self.model = BertForSequenceClassification.from_pretrained(
+            f'bert-{model_size}-uncased',
+            num_labels=num_labels,
+            hidden_dropout_prob=args['hidden_dropout'],
+            attention_probs_dropout_prob=args['attention_dropout']
+        )
 
         # Freeze embeddings' parameters for saving memory
         for param in self.model.bert.embeddings.parameters():
@@ -19,9 +24,14 @@ class BERT(nn.Module):
         return logits
 
 class RoBERTa(nn.Module):
-    def __init__(self, model_size, num_labels=2):
+    def __init__(self, model_size, args, num_labels=2):
         super(RoBERTa, self).__init__()
-        self.model = RobertaForSequenceClassification.from_pretrained(f'roberta-{model_size}', num_labels=num_labels)
+        self.model = RobertaForSequenceClassification.from_pretrained(
+            f'roberta-{model_size}',
+            num_labels=num_labels,
+            hidden_dropout_prob=args['hidden_dropout'],
+            attention_probs_dropout_prob=args['attention_dropout']
+        )
 
         # Freeze embeddings' parameters for saving memory
         for param in self.model.roberta.embeddings.parameters():
@@ -34,14 +44,22 @@ class RoBERTa(nn.Module):
         return logits
 
 class MTModel(nn.Module):
-    def __init__(self, model, model_size):
+    def __init__(self, model, model_size, args):
         super(MTModel, self).__init__()
         if model == 'bert':
-            pretrained = BertForSequenceClassification.from_pretrained(f'bert-{model_size}-uncased')
+            pretrained = BertForSequenceClassification.from_pretrained(
+                f'bert-{model_size}-uncased',
+                hidden_dropout_prob=args['hidden_dropout'],
+                attention_probs_dropout_prob=args['attention_dropout']
+            )
             self.main = pretrained.bert
             self.dropout = pretrained.dropout
         elif model == 'roberta':
-            pretrained = RobertaForSequenceClassification.from_pretrained(f'roberta-{model_size}')
+            pretrained = RobertaForSequenceClassification.from_pretrained(
+                f'roberta-{model_size}',
+                hidden_dropout_prob=args['hidden_dropout'],
+                attention_probs_dropout_prob=args['attention_dropout']
+            )
             self.main = pretrained.roberta
             self.dropout = pretrained.dropout
 
@@ -64,36 +82,73 @@ class MTModel(nn.Module):
         return logits_A, logits_B, logits_C
 
 class BERT_LSTM(nn.Module):
-    def __init__(self, model_size, num_labels, input_size=768, hidden_size=300):
+    def __init__(self, model_size, num_labels, args, input_size=768):
         super(BERT_LSTM, self).__init__()
-        self.emb = BertModel.from_pretrained(f'bert-{model_size}-uncased')
+        hidden_size = args['hidden_size']
+
+        self.emb = BertModel.from_pretrained(
+            f'bert-{model_size}-uncased',
+            hidden_dropout_prob=args['hidden_dropout'],
+            attention_probs_dropout_prob=args['attention_dropout']
+        )
         self.lstm = nn.LSTM(
             input_size=input_size,
             hidden_size=hidden_size,
-            num_layers=1,
+            num_layers=args['num_layers'],
             bidirectional=True,
-            batch_first=True
+            batch_first=True,
+            dropout=args['dropout'] if args['num_layers'] > 1 else 0
         )
+        self.dropout = nn.Dropout(p=args['dropout'])
         self.linear = nn.Linear(in_features=hidden_size * 2, out_features=num_labels)
 
     def forward(self, inputs, mask, labels):
         embs = self.emb(inputs, attention_mask=mask)[0] # (batch_size, sequence_length, hidden_size)
         _, (h_n, _) = self.lstm(input=embs) # (num_layers * num_directions, batch, hidden_size)
         h_n = torch.cat((h_n[0], h_n[1]), dim=1)
+        h_n = self.dropout(h_n)
         logits = self.linear(h_n)
         return logits
 
 class BERT_LSTM_MTL(nn.Module):
-    def __init__(self, model, model_size, input_size=768, hidden_size=300):
+    def __init__(self, model, model_size, args, input_size=768):
         super(BERT_LSTM_MTL, self).__init__()
-        self.emb = BertModel.from_pretrained(f'bert-{model_size}-uncased')
+        hidden_size = args['hidden_size']
+
+        self.emb = BertModel.from_pretrained(
+            f'bert-{model_size}-uncased',
+            hidden_dropout_prob=args['hidden_dropout'],
+            attention_probs_dropout_prob=args['attention_dropout']
+        )
         # self.main = pretrained.bert
         # self.dropout = pretrained.dropout
         self.LSTMs = nn.ModuleDict({
-            'a': nn.LSTM(input_size=input_size, hidden_size=hidden_size, bidirectional=True, batch_first=True),
-            'b': nn.LSTM(input_size=input_size, hidden_size=hidden_size, bidirectional=True, batch_first=True),
-            'c': nn.LSTM(input_size=input_size, hidden_size=hidden_size, bidirectional=True, batch_first=True)
+            'a': nn.LSTM(
+                input_size=input_size,
+                hidden_size=hidden_size,
+                num_layers=args['num_layers'],
+                bidirectional=True,
+                batch_first=True,
+                dropout=args['dropout'] if args['num_layers'] > 1 else 0
+            ),
+            'b': nn.LSTM(
+                input_size=input_size,
+                hidden_size=hidden_size,
+                num_layers=args['num_layers'],
+                bidirectional=True,
+                batch_first=True,
+                dropout=args['dropout'] if args['num_layers'] > 1 else 0
+            ),
+            'c': nn.LSTM(
+                input_size=input_size,
+                hidden_size=hidden_size,
+                num_layers=args['num_layers'],
+                bidirectional=True,
+                batch_first=True,
+                dropout=args['dropout'] if args['num_layers'] > 1 else 0
+            )
         })
+        self.dropout = nn.Dropout(p=args['dropout'])
         self.Linears = nn.ModuleDict({
             'a': nn.Linear(in_features=hidden_size * 2, out_features=2),
             'b': nn.Linear(in_features=hidden_size * 2, out_features=3),
@@ -105,20 +160,23 @@ class BERT_LSTM_MTL(nn.Module):
 
         _, (logits_a, _) = self.LSTMs['a'](embs)
         logits_a = torch.cat((logits_a[0], logits_a[1]), dim=1)
+        logits_a = self.dropout(logits_a)
         logits_a = self.Linears['a'](logits_a)
 
         _, (logits_b, _) = self.LSTMs['b'](embs)
         logits_b = torch.cat((logits_b[0], logits_b[1]), dim=1)
+        logits_b = self.dropout(logits_b)
         logits_b = self.Linears['b'](logits_b)
 
         _, (logits_c, _) = self.LSTMs['c'](embs)
         logits_c = torch.cat((logits_c[0], logits_c[1]), dim=1)
+        logits_c = self.dropout(logits_c)
         logits_c = self.Linears['c'](logits_c)
 
         return logits_a, logits_b, logits_c
 
 class GatedModel(nn.Module):
-    def __init__(self, model, model_size):
+    def __init__(self, model, model_size, args):
         super(GatedModel, self).__init__()
         # using BERT/RoBERTa pre-trained model
         if model == 'bert':

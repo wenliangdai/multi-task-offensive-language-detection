@@ -207,7 +207,7 @@ class Trainer():
         loss /= iters_per_epoch
         f1 /= iters_per_epoch
 
-        print(f'Loss={loss:.4f}')
+        print(f'loss = {loss:.4f}')
         print(f'A: {f1[0][0]:.4f}, {f1[0][1]:.4f}, {f1[0][2]:.4f}')
         print(f'B: {f1[1][0]:.4f}, {f1[1][1]:.4f}, {f1[1][2]:.4f}')
         print(f'C: {f1[2][0]:.4f}, {f1[2][1]:.4f}, {f1[2][2]:.4f}')
@@ -255,7 +255,7 @@ class Trainer():
         loss /= iters_per_epoch
         f1 /= iters_per_epoch
 
-        print(f'Loss={loss:.4f}')
+        print(f'loss = {loss:.4f}')
         print(f'A: {f1[0][0]:.4f}, {f1[0][1]:.4f}, {f1[0][2]:.4f}')
         print(f'B: {f1[1][0]:.4f}, {f1[1][1]:.4f}, {f1[1][2]:.4f}')
         print(f'C: {f1[2][0]:.4f}, {f1[2][1]:.4f}, {f1[2][2]:.4f}')
@@ -275,7 +275,7 @@ class Trainer():
         ], np.float64)
 
     def printing(self, loss, f1):
-        print(f'Loss={loss:.4f}')
+        print(f'loss = {loss:.4f}')
         print(f'Macro-F1 = {f1[0]:.4f}')
         print(f'Micro-F1 = {f1[1]:.4f}')
         print(f'Weighted-F1 = {f1[2]:.4f}')

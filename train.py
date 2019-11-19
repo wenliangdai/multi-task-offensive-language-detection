@@ -42,23 +42,23 @@ if __name__ == '__main__':
 
     if model_name == 'bert':
         if task == 'all':
-            model = BERT_LSTM_MTL(model_name, model_size)
+            model = BERT_LSTM_MTL(model_name, model_size, args=args)
         else:
-            model = BERT_LSTM(model_size, num_labels)
+            model = BERT_LSTM(model_size, num_labels, args=args)
         tokenizer = BertTokenizer.from_pretrained(f'bert-{model_size}-uncased')
     elif model_name == 'roberta':
         if task == 'all':
-            model = MTModel(model_name, model_size)
+            model = MTModel(model_name, model_size, args=args)
         else:
-            model = RoBERTa(model_size, num_labels)
+            model = RoBERTa(model_size, num_labels, args=args)
         tokenizer = RobertaTokenizer.from_pretrained(f'roberta-{model_size}')
     elif model_name == 'bert-gate' and task == 'all':
         model_name = model_name.replace('-gate', '')
-        model = GatedModel(model_name, model_size)
+        model = GatedModel(model_name, model_size, args=args)
         tokenizer = BertTokenizer.from_pretrained(f'bert-{model_size}-uncased')
     elif model_name == 'roberta-gate' and task == 'all':
         model_name = model_name.replace('-gate', '')
-        model = GatedModel(model_name, model_size)
+        model = GatedModel(model_name, model_size, args=args)
         tokenizer = RobertaTokenizer.from_pretrained(f'roberta-{model_size}')
 
     # Move model to correct device
