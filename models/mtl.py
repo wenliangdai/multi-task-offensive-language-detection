@@ -6,6 +6,7 @@ class MTL_Transformer_LSTM(nn.Module):
     def __init__(self, model, model_size, args):
         super(MTL_Transformer_LSTM, self).__init__()
         hidden_size = args['hidden_size']
+        self.add_final = args['add_final']
 
         self.concat = args['hidden_combine_method'] == 'concat'
         input_size = 768 if model_size == 'base' else 1024
@@ -93,7 +94,7 @@ class MTL_Transformer_LSTM(nn.Module):
         logits_b = self.Linears['b'](logits_b)
         logits_c = self.Linears['c'](logits_c)
 
-        if not self.args['add_final']:
+        if not self.add_final:
             return logits_a, logits_b, logits_c
         else:
             final_input = torch.cat((output_a, output_b, output_c), dim=2) # (seq_len, batch, num_directions * hidden_size * 3)
