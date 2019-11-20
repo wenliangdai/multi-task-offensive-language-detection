@@ -68,6 +68,9 @@ class Trainer():
             [0, 0, 0],
             [0, 0, 0]
         ], dtype=np.float64)
+        if self.final:
+            self.best_train_f1_m = np.concatenate((self.best_train_f1_m, [[0, 0, 0]]))
+            self.best_test_f1_m = np.concatenate((self.best_test_f1_m, [[0, 0, 0]]))
 
     def train(self):
         for epoch in range(self.epochs):
