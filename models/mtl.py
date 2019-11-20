@@ -53,7 +53,7 @@ class MTL_Transformer_LSTM(nn.Module):
                 hidden_size=hidden_size,
                 num_layers=args['num_layers'],
                 bidirectional=True,
-                batch_first=False,
+                batch_first=True,
                 dropout=args['dropout'] if args['num_layers'] > 1 else 0
             )
         })
@@ -97,7 +97,7 @@ class MTL_Transformer_LSTM(nn.Module):
         if not self.add_final:
             return logits_a, logits_b, logits_c
         else:
-            final_input = torch.cat((output_a, output_b, output_c), dim=2) # (seq_len, batch, num_directions * hidden_size * 3)
+            final_input = torch.cat((output_a, output_b, output_c), dim=2) # (batch, seq_len, num_directions * hidden_size * 3)
             _, (logits_final, _) = self.LSTMs['final'](final_input)
             if self.concat:
                 logits_final = torch.cat((logits_final[0], logits_final[1]), dim=1)
