@@ -46,6 +46,14 @@ class MTL_Transformer_LSTM(nn.Module):
                 bidirectional=True,
                 batch_first=True,
                 dropout=args['dropout'] if args['num_layers'] > 1 else 0
+            ),
+            'final': nn.LSTM(
+                input_size=hidden_size * 6,
+                hidden_size=hidden_size,
+                num_layers=args['num_layers'],
+                bidirectional=True,
+                batch_first=False,
+                dropout=args['dropout'] if args['num_layers'] > 1 else 0
             )
         })
         self.dropout = nn.Dropout(p=args['dropout'])
@@ -53,34 +61,46 @@ class MTL_Transformer_LSTM(nn.Module):
         self.Linears = nn.ModuleDict({
             'a': nn.Linear(in_features=linear_in_features, out_features=2),
             'b': nn.Linear(in_features=linear_in_features, out_features=3),
-            'c': nn.Linear(in_features=linear_in_features, out_features=4)
+            'c': nn.Linear(in_features=linear_in_features, out_features=4),
+            'final': nn.Linear(in_features=linear_in_features, out_features=2)
         })
 
     def forward(self, inputs, mask):
         embs = self.emb(inputs, attention_mask=mask)[0] # (batch_size, sequence_length, hidden_size)
 
-        _, (logits_a, _) = self.LSTMs['a'](embs)
+        output_a, (logits_a, _) = self.LSTMs['a'](embs)
         if self.concat:
             logits_a = torch.cat((logits_a[0], logits_a[1]), dim=1)
         else:
             logits_a = logits_a[0] + logits_a[1]
         logits_a = self.dropout(logits_a)
-        logits_a = self.Linears['a'](logits_a)
 
-        _, (logits_b, _) = self.LSTMs['b'](embs)
+        output_b, (logits_b, _) = self.LSTMs['b'](embs)
         if self.concat:
             logits_b = torch.cat((logits_b[0], logits_b[1]), dim=1)
         else:
             logits_b = logits_b[0] + logits_b[1]
         logits_b = self.dropout(logits_b)
-        logits_b = self.Linears['b'](logits_b)
 
-        _, (logits_c, _) = self.LSTMs['c'](embs)
+        output_c, (logits_c, _) = self.LSTMs['c'](embs)
         if self.concat:
             logits_c = torch.cat((logits_c[0], logits_c[1]), dim=1)
         else:
             logits_c = logits_c[0] + logits_c[1]
         logits_c = self.dropout(logits_c)
+
+        logits_a = self.Linears['a'](logits_a)
+        logits_b = self.Linears['b'](logits_b)
         logits_c = self.Linears['c'](logits_c)
 
-        return logits_a, logits_b, logits_c
+        if not self.args['add_final']:
+            return logits_a, logits_b, logits_c
+        else:
+            final_input = torch.cat((output_a, output_b, output_c), dim=2) # (seq_len, batch, num_directions * hidden_size * 3)
+            _, (logits_final, _) = self.LSTMs['final'](final_input)
+            if self.concat:
+                logits_final = torch.cat((logits_final[0], logits_final[1]), dim=1)
+            else:
+                logits_final = logits_final[0] + logits_final[1]
+            logits_final = self.Linears['final'](logits_final)
+            return logits_a, logits_b, logits_c, logits_final

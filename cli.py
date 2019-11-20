@@ -15,10 +15,11 @@ def get_args():
     parser.add_argument('-ta', '--task', help='Which subtask to run', type=str, required=True)
     parser.add_argument('-mo', '--model', help='Which model to use', type=str, required=True)
     parser.add_argument('-ms', '--model_size', help='Which size of model to use', type=str, required=False, default='base')
-    parser.add_argument('-cl', '--clip', help='Using clip to gradients', action='store_true')
+    parser.add_argument('-cl', '--clip', help='Use clip to gradients', action='store_true')
     parser.add_argument('-fr', '--freeze', help='Freeze the embedding layer or not to use less GPU memory', type=bool, required=False, default=False)
     parser.add_argument('-lw', '--loss-weights', help='Weights for all losses', nargs='+', type=float, required=False, default=[1, 1, 1, 1])
-    parser.add_argument('-sc', '--scheduler', help='Using scheduler to optimizer', action='store_true')
+    parser.add_argument('-sc', '--scheduler', help='Use scheduler to optimizer', action='store_true')
+    parser.add_argument('-af', '--add-final', help='Add the final loss layer', action='store_true')
 
     # Transformers
     parser.add_argument('-ad', '--attention-dropout', help='transformer attention dropout', type=float, required=False, default=0.1)

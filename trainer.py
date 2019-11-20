@@ -31,7 +31,8 @@ class Trainer():
         print_iter: int,
         patience: int,
         task_name: str,
-        model_name: str
+        model_name: str,
+        final: bool
     ):
         self.model = model
         self.epochs = epochs
@@ -46,6 +47,7 @@ class Trainer():
         self.patience = patience
         self.task_name = task_name
         self.model_name = model_name
+        self.final = final
 
         # Evaluation results
         self.train_losses = []
@@ -163,6 +165,8 @@ class Trainer():
             print(f'Best test results A: {self.best_test_f1_m[0][0]:.4f}, {self.best_test_f1_m[0][1]:.4f}, {self.best_test_f1_m[0][2]:.4f}')
             print(f'Best test results B: {self.best_test_f1_m[1][0]:.4f}, {self.best_test_f1_m[1][1]:.4f}, {self.best_test_f1_m[1][2]:.4f}')
             print(f'Best test results C: {self.best_test_f1_m[2][0]:.4f}, {self.best_test_f1_m[2][1]:.4f}, {self.best_test_f1_m[2][2]:.4f}')
+            if self.final:
+                print(f'Best test results Final: {self.best_test_f1_m[3][0]:.4f}, {self.best_test_f1_m[3][1]:.4f}, {self.best_test_f1_m[3][2]:.4f}')
             print('=' * 20)
 
     def train_one_epoch_m(self):
@@ -173,6 +177,8 @@ class Trainer():
             [0, 0, 0],
             [0, 0, 0]
         ], dtype=np.float64)
+        if self.final:
+            f1 = np.concatenate((f1, [[0, 0, 0]]))
         loss = 0
         iters_per_epoch = 0
         for iteration, (inputs, mask, label_A, label_B, label_C) in enumerate(dataloader):
@@ -188,19 +194,27 @@ class Trainer():
 
             with torch.set_grad_enabled(True):
                 # Forward
-                logits_A, logits_B, logits_C = self.model(inputs, mask)
-                y_pred_A = logits_A.argmax(dim=1)
-                y_pred_B = logits_B.argmax(dim=1)
-                y_pred_C = logits_C.argmax(dim=1)
+                # logits_A, logits_B, logits_C = self.model(inputs, mask)
+                all_logits = self.model(inputs, mask)
+                y_pred_A = all_logits[0].argmax(dim=1)
+                y_pred_B = all_logits[1].argmax(dim=1)
+                y_pred_C = all_logits[2].argmax(dim=1)
 
-                _loss = self.loss_weights[0] * self.criterion(logits_A, label_A)
-                _loss += self.loss_weights[1] * self.criterion(logits_B, label_B)
-                _loss += self.loss_weights[2] * self.criterion(logits_C, label_C)
-
-                loss += _loss.item()
                 f1[0] += self.calc_f1(label_A, y_pred_A)
                 f1[1] += self.calc_f1(label_B, y_pred_B)
                 f1[2] += self.calc_f1(label_C, y_pred_C)
+
+                _loss = self.loss_weights[0] * self.criterion(all_logits[0], label_A)
+                _loss += self.loss_weights[1] * self.criterion(all_logits[1], label_B)
+                _loss += self.loss_weights[2] * self.criterion(all_logits[2], label_C)
+
+                if self.final:
+                    y_pred_final = all_logits[3].argmax(dim=1)
+                    _loss += self.loss_weights[3] * self.criterion(all_logits[3], label_A)
+                    f1[3] += self.calc_f1(label_A, y_pred_final)
+
+                loss += _loss.item()
+
                 # Backward
                 _loss.backward()
                 if self.clip:
@@ -218,6 +232,8 @@ class Trainer():
         print(f'A: {f1[0][0]:.4f}, {f1[0][1]:.4f}, {f1[0][2]:.4f}')
         print(f'B: {f1[1][0]:.4f}, {f1[1][1]:.4f}, {f1[1][2]:.4f}')
         print(f'C: {f1[2][0]:.4f}, {f1[2][1]:.4f}, {f1[2][2]:.4f}')
+        if self.final:
+            print(f'Final: {f1[3][0]:.4f}, {f1[3][1]:.4f}, {f1[3][2]:.4f}')
 
         self.train_losses.append(loss)
         self.train_f1.append(f1)
@@ -234,6 +250,8 @@ class Trainer():
             [0, 0, 0],
             [0, 0, 0]
         ], dtype=np.float64)
+        if self.final:
+            f1 = np.concatenate((f1, [[0, 0, 0]]))
         loss = 0
         iters_per_epoch = 0
         for iteration, (inputs, mask, label_A, label_B, label_C) in enumerate(dataloader):
@@ -246,18 +264,25 @@ class Trainer():
             label_C = label_C.to(device=self.device)
 
             with torch.set_grad_enabled(False):
-                logits_A, logits_B, logits_C = self.model(inputs, mask)
-                y_pred_A = logits_A.argmax(dim=1)
-                y_pred_B = logits_B.argmax(dim=1)
-                y_pred_C = logits_C.argmax(dim=1)
+                all_logits = self.model(inputs, mask)
+                y_pred_A = all_logits[0].argmax(dim=1)
+                y_pred_B = all_logits[1].argmax(dim=1)
+                y_pred_C = all_logits[2].argmax(dim=1)
 
-                _loss = (self.criterion(logits_A, label_A) +
-                         self.criterion(logits_B, label_B) +
-                         self.criterion(logits_C, label_C))
-                loss += _loss.item()
                 f1[0] += self.calc_f1(label_A, y_pred_A)
                 f1[1] += self.calc_f1(label_B, y_pred_B)
                 f1[2] += self.calc_f1(label_C, y_pred_C)
+
+                _loss = self.loss_weights[0] * self.criterion(all_logits[0], label_A)
+                _loss += self.loss_weights[1] * self.criterion(all_logits[1], label_B)
+                _loss += self.loss_weights[2] * self.criterion(all_logits[2], label_C)
+
+                if self.final:
+                    y_pred_final = all_logits[3].argmax(dim=1)
+                    _loss += self.loss_weights[3] * self.criterion(all_logits[3], label_A)
+                    f1[3] += self.calc_f1(label_A, y_pred_final)
+
+                loss += _loss.item()
 
         loss /= iters_per_epoch
         f1 /= iters_per_epoch
@@ -266,6 +291,8 @@ class Trainer():
         print(f'A: {f1[0][0]:.4f}, {f1[0][1]:.4f}, {f1[0][2]:.4f}')
         print(f'B: {f1[1][0]:.4f}, {f1[1][1]:.4f}, {f1[1][2]:.4f}')
         print(f'C: {f1[2][0]:.4f}, {f1[2][1]:.4f}, {f1[2][2]:.4f}')
+        if self.final:
+            print(f'Final: {f1[3][0]:.4f}, {f1[3][1]:.4f}, {f1[3][2]:.4f}')
 
         self.test_losses.append(loss)
         self.test_f1.append(f1)
