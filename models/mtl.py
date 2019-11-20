@@ -104,4 +104,5 @@ class MTL_Transformer_LSTM(nn.Module):
             else:
                 logits_final = logits_final[0] + logits_final[1]
             logits_final = self.Linears['final'](logits_final)
+            logits_final = self.dropout(logits_final)
             return logits_a, logits_b, logits_c, logits_final
