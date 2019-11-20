@@ -10,7 +10,7 @@ from datasets import HuggingfaceDataset, HuggingfaceMTDataset, ImbalancedDataset
 from models.bert import BERT, RoBERTa, MTModel, BERT_LSTM
 from models.gated import GatedModel
 from models.mtl import MTL_Transformer_LSTM
-from transformers import BertTokenizer, RobertaTokenizer
+from transformers import BertTokenizer, RobertaTokenizer, WarmupCosineSchedule
 from trainer import Trainer
 
 TRAIN_PATH = os.path.join(OLID_PATH, 'olid-training-v1.0.tsv')
@@ -106,7 +106,16 @@ if __name__ == '__main__':
     }
 
     criterion = torch.nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=wd)
+
+    if args['scheduler']:
+        optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=wd)
+        # A warmup scheduler
+        t_total = epochs * len(dataloaders['train'])
+        warmup_steps = np.ceil(t_total / 10.0)
+        scheduler = WarmupCosineSchedule(optimizer, warmup_steps=warmup_steps, t_total=t_total)
+    else:
+        optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=wd)
+        scheduler = None
 
     trainer = Trainer(
         model=model,
@@ -116,7 +125,7 @@ if __name__ == '__main__':
         loss_weights=args['loss_weights'],
         clip=args['clip'],
         optimizer=optimizer,
-        scheduler=None,
+        scheduler=scheduler,
         device=device,
         print_iter=print_iter,
         patience=patience,
