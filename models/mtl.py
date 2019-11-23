@@ -67,59 +67,75 @@ class MTL_Transformer_LSTM(nn.Module):
 
         self.dropout = nn.Dropout(p=args['dropout'])
 
-        # linear_in_features = hidden_size * 2 if self.concat else hidden_size
-        # self.Linears = nn.ModuleDict({
-        #     'a': nn.Linear(in_features=linear_in_features, out_features=2),
-        #     'b': nn.Linear(in_features=linear_in_features, out_features=3),
-        #     'c': nn.Linear(in_features=linear_in_features, out_features=4),
-        #     'final': nn.Linear(in_features=linear_in_features, out_features=2)
-        # })
+        linear_in_features = hidden_size * 2 if self.concat else hidden_size
+        self.Linears = nn.ModuleDict({
+            'a': nn.Sequential(
+                nn.Linear(linear_in_features, hidden_size),
+                nn.ReLU(),
+                nn.Linear(hidden_size, 2)
+            ),
+            'b': nn.Sequential(
+                nn.Linear(linear_in_features, hidden_size),
+                nn.ReLU(),
+                nn.Linear(hidden_size, 3)
+            ),
+            'c': nn.Sequential(
+                nn.Linear(linear_in_features, hidden_size),
+                nn.ReLU(),
+                nn.Linear(hidden_size, 4)
+            ),
+            'final': nn.Sequential(
+                nn.Linear(linear_in_features * 3, hidden_size),
+                nn.ReLU(),
+                nn.Linear(hidden_size, 2)
+            )
+        })
 
-        self.final = nn.Sequential(
-            nn.Linear(hidden_size * 2 * 3, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, 2)
-        )
+        # self.final = nn.Sequential(
+        #     nn.Linear(hidden_size * 2 * 3, hidden_size),
+        #     nn.ReLU(),
+        #     nn.Linear(hidden_size, 2)
+        # )
 
     def forward(self, inputs, lens, mask):
         embs = self.emb(inputs, attention_mask=mask)[0] # (batch_size, sequence_length, hidden_size)
 
-        # output_a, (logits_a, _) = self.LSTMs['a'](embs)
-        # if self.concat:
-        #     logits_a = torch.cat((logits_a[0], logits_a[1]), dim=1)
-        # else:
-        #     logits_a = logits_a[0] + logits_a[1]
+        _, (h_a, _) = self.LSTMs['a'](embs)
+        if self.concat:
+            h_a = torch.cat((h_a[0], h_a[1]), dim=1)
+        else:
+            h_a = h_a[0] + h_a[1]
+        h_a = self.dropout(h_a)
+
+        _, (h_b, _) = self.LSTMs['b'](embs)
+        if self.concat:
+            h_b = torch.cat((h_b[0], h_b[1]), dim=1)
+        else:
+            h_b = h_b[0] + h_b[1]
+        h_b = self.dropout(h_b)
+
+        _, (h_c, _) = self.LSTMs['c'](embs)
+        if self.concat:
+            h_c = torch.cat((h_c[0], h_c[1]), dim=1)
+        else:
+            h_c = h_c[0] + h_c[1]
+        h_c = self.dropout(h_c)
+
+        logits_a = self.Linears['a'](h_a)
+        logits_b = self.Linears['b'](h_b)
+        logits_c = self.Linears['c'](h_c)
+
+        # _, (logits_a, _) = self.LSTMs['a'](embs)
+        # _, (logits_b, _) = self.LSTMs['b'](embs)
+        # _, (logits_c, _) = self.LSTMs['c'](embs)
+
         # logits_a = self.dropout(logits_a)
-
-        # output_b, (logits_b, _) = self.LSTMs['b'](embs)
-        # if self.concat:
-        #     logits_b = torch.cat((logits_b[0], logits_b[1]), dim=1)
-        # else:
-        #     logits_b = logits_b[0] + logits_b[1]
         # logits_b = self.dropout(logits_b)
-
-        # output_c, (logits_c, _) = self.LSTMs['c'](embs)
-        # if self.concat:
-        #     logits_c = torch.cat((logits_c[0], logits_c[1]), dim=1)
-        # else:
-        #     logits_c = logits_c[0] + logits_c[1]
         # logits_c = self.dropout(logits_c)
 
-        # logits_a = self.Linears['a'](logits_a)
-        # logits_b = self.Linears['b'](logits_b)
-        # logits_c = self.Linears['c'](logits_c)
-
-        output_a, _ = self.LSTMs['a'](embs)
-        output_b, _ = self.LSTMs['b'](embs)
-        output_c, _ = self.LSTMs['c'](embs)
-
-        output_a = self.dropout(output_a)
-        output_b = self.dropout(output_b)
-        output_c = self.dropout(output_c)
-
-        logits_a, _ = self.attention_layers['a'](output_a, lens)
-        logits_b, _ = self.attention_layers['b'](output_b, lens)
-        logits_c, _ = self.attention_layers['c'](output_c, lens)
+        # logits_a, _ = self.attention_layers['a'](output_a, lens)
+        # logits_b, _ = self.attention_layers['b'](output_b, lens)
+        # logits_c, _ = self.attention_layers['c'](output_c, lens)
 
         if not self.add_final:
             return logits_a, logits_b, logits_c
@@ -133,5 +149,6 @@ class MTL_Transformer_LSTM(nn.Module):
             # logits_final = self.Linears['final'](logits_final)
             # logits_final = self.dropout(logits_final)
 
-            logits_final = self.final(torch.cat((logits_a, logits_b, logits_c), dim=1))
+            final_input = torch.cat((h_a, h_b, h_c), dim=1)
+            logits_final = self.Linears['final'](final_input)
             return logits_a, logits_b, logits_c, logits_final
