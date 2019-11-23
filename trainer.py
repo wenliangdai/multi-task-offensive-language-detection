@@ -89,10 +89,11 @@ class Trainer():
         f1 = np.array([0, 0, 0], dtype=np.float64) # [macro, micro, weighted]
         loss = 0
         iters_per_epoch = 0
-        for iteration, (inputs, mask, labels) in enumerate(dataloader):
+        for iteration, (inputs, lens, mask, labels) in enumerate(dataloader):
             iters_per_epoch += 1
 
             inputs = inputs.to(device=self.device)
+            lens = lens.to(device=self.device)
             mask = mask.to(device=self.device)
             labels = labels.to(device=self.device)
 
@@ -100,7 +101,7 @@ class Trainer():
 
             with torch.set_grad_enabled(True):
                 # Forward
-                logits = self.model(inputs, mask, labels)
+                logits = self.model(inputs, lens, mask, labels)
                 _loss = self.criterion(logits, labels)
                 y_pred = logits.argmax(dim=1)
                 loss += _loss.item()
@@ -132,15 +133,16 @@ class Trainer():
         f1 = np.array([0, 0, 0], np.float64) # [macro, micro, weighted]
         loss = 0
         iters_per_epoch = 0
-        for iteration, (inputs, mask, labels) in enumerate(dataloader):
+        for iteration, (inputs, lens, mask, labels) in enumerate(dataloader):
             iters_per_epoch += 1
 
             inputs = inputs.to(device=self.device)
+            lens = lens.to(device=self.device)
             mask = mask.to(device=self.device)
             labels = labels.to(device=self.device)
 
             with torch.set_grad_enabled(False):
-                logits = self.model(inputs, mask, labels)
+                logits = self.model(inputs, lens, mask, labels)
                 _loss = self.criterion(logits, labels)
                 y_pred = logits.argmax(dim=1)
                 loss += _loss.item()
@@ -184,10 +186,11 @@ class Trainer():
             f1 = np.concatenate((f1, [[0, 0, 0]]))
         loss = 0
         iters_per_epoch = 0
-        for iteration, (inputs, mask, label_A, label_B, label_C) in enumerate(dataloader):
+        for iteration, (inputs, lens, mask, label_A, label_B, label_C) in enumerate(dataloader):
             iters_per_epoch += 1
 
             inputs = inputs.to(device=self.device)
+            lens = lens.to(device=self.device)
             mask = mask.to(device=self.device)
             label_A = label_A.to(device=self.device)
             label_B = label_B.to(device=self.device)
@@ -198,7 +201,7 @@ class Trainer():
             with torch.set_grad_enabled(True):
                 # Forward
                 # logits_A, logits_B, logits_C = self.model(inputs, mask)
-                all_logits = self.model(inputs, mask)
+                all_logits = self.model(inputs, lens, mask)
                 y_pred_A = all_logits[0].argmax(dim=1)
                 y_pred_B = all_logits[1].argmax(dim=1)
                 y_pred_C = all_logits[2].argmax(dim=1)
@@ -257,17 +260,18 @@ class Trainer():
             f1 = np.concatenate((f1, [[0, 0, 0]]))
         loss = 0
         iters_per_epoch = 0
-        for iteration, (inputs, mask, label_A, label_B, label_C) in enumerate(dataloader):
+        for iteration, (inputs, lens, mask, label_A, label_B, label_C) in enumerate(dataloader):
             iters_per_epoch += 1
 
             inputs = inputs.to(device=self.device)
+            lens = lens.to(device=self.device)
             mask = mask.to(device=self.device)
             label_A = label_A.to(device=self.device)
             label_B = label_B.to(device=self.device)
             label_C = label_C.to(device=self.device)
 
             with torch.set_grad_enabled(False):
-                all_logits = self.model(inputs, mask)
+                all_logits = self.model(inputs, lens, mask)
                 y_pred_A = all_logits[0].argmax(dim=1)
                 y_pred_B = all_logits[1].argmax(dim=1)
                 y_pred_C = all_logits[2].argmax(dim=1)

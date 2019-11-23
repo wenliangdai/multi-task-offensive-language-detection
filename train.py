@@ -69,13 +69,13 @@ if __name__ == '__main__':
     # Read in data depends on different subtasks
     # label_orders = {'a': ['OFF', 'NOT'], 'b': ['TIN', 'UNT'], 'c': ['IND', 'GRP', 'OTH']}
     if task in ['a', 'b', 'c']:
-        data_methods = {'a': task_a, 'b': task_b, 'c': task_c, 'all': all_tasks}
-        ids, token_ids, mask, labels = data_methods[task](TRAIN_PATH, tokenizer=tokenizer, truncate=truncate)
-        test_ids, test_token_ids, test_mask, test_labels = read_test_file(task, tokenizer=tokenizer, truncate=truncate)
+        data_methods = {'a': task_a, 'b': task_b, 'c': task_c}
+        ids, token_ids, lens, mask, labels = data_methods[task](TRAIN_PATH, tokenizer=tokenizer, truncate=truncate)
+        test_ids, test_token_ids, test_lens, test_mask, test_labels = read_test_file(task, tokenizer=tokenizer, truncate=truncate)
         _Dataset = HuggingfaceDataset
     elif task in ['all']:
-        ids, token_ids, mask, label_a, label_b, label_c = all_tasks(TRAIN_PATH, tokenizer=tokenizer, truncate=truncate)
-        test_ids, test_token_ids, test_mask, test_label_a, test_label_b, test_label_c = read_test_file_all(tokenizer)
+        ids, token_ids, lens, mask, label_a, label_b, label_c = all_tasks(TRAIN_PATH, tokenizer=tokenizer, truncate=truncate)
+        test_ids, test_token_ids, test_lens, test_mask, test_label_a, test_label_b, test_label_c = read_test_file_all(tokenizer)
         labels = {'a': label_a, 'b': label_b, 'c': label_c}
         test_labels = {'a': test_label_a, 'b': test_label_b, 'c': test_label_c}
         _Dataset = HuggingfaceMTDataset
@@ -83,12 +83,14 @@ if __name__ == '__main__':
     datasets = {
         'train': _Dataset(
             input_ids=token_ids,
+            lens=lens,
             mask=mask,
             labels=labels,
             task=task
         ),
         'test': _Dataset(
             input_ids=test_token_ids,
+            lens=test_lens,
             mask=test_mask,
             labels=test_labels,
             task=task

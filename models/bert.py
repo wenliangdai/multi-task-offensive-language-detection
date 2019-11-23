@@ -17,7 +17,7 @@ class BERT(nn.Module):
         for param in self.model.bert.embeddings.parameters():
             param.requires_grad = False
 
-    def forward(self, inputs, mask, labels):
+    def forward(self, inputs, lens, mask, labels):
         outputs = self.model(inputs, attention_mask=mask, labels=labels)
         loss, logits = outputs[:2]
         # return loss, logits
@@ -37,7 +37,7 @@ class RoBERTa(nn.Module):
         for param in self.model.roberta.embeddings.parameters():
             param.requires_grad = False
 
-    def forward(self, inputs, mask, labels):
+    def forward(self, inputs, lens, mask, labels):
         outputs = self.model(inputs, attention_mask=mask, labels=labels)
         loss, logits = outputs[:2]
         # return loss, logits
@@ -73,7 +73,7 @@ class MTModel(nn.Module):
         self.classifier_b = nn.Linear(in_features=linear_in_features, out_features=3, bias=True)
         self.classifier_c = nn.Linear(in_features=linear_in_features, out_features=4, bias=True)
 
-    def forward(self, inputs, mask):
+    def forward(self, inputs, lens, mask):
         outputs = self.main(inputs, attention_mask=mask)
         pooled_output = outputs[1]
         pooled_output = self.dropout(pooled_output)
@@ -106,7 +106,7 @@ class BERT_LSTM(nn.Module):
         self.dropout = nn.Dropout(p=args['dropout'])
         self.linear = nn.Linear(in_features=hidden_size * 2 if self.concat else hidden_size, out_features=num_labels)
 
-    def forward(self, inputs, mask, labels):
+    def forward(self, inputs, lens, mask, labels):
         embs = self.emb(inputs, attention_mask=mask)[0] # (batch_size, sequence_length, hidden_size)
         _, (h_n, _) = self.lstm(input=embs) # (num_layers * num_directions, batch, hidden_size)
         if self.concat:

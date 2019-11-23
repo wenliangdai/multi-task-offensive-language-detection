@@ -8,7 +8,7 @@ import wordsegment
 # from nltk.tokenize import word_tokenize
 # from vocabulary import Vocab
 from config import OLID_PATH # SAVE_DIR, PAD_TOKEN, SEP_TOEKN
-from utils import pad_sents, get_mask, truncate_sents
+from utils import pad_sents, get_mask, truncate_sents, get_lens
 
 # Uncomment this line if you haven't download nltk packages
 # nltk.download()
@@ -72,13 +72,14 @@ def read_test_file_all(tokenizer, truncate=-1):
 
     token_ids = [tokenizer.encode(text=tweets[i], add_special_tokens=True) for i in range(nums)]
     mask = np.array(get_mask(token_ids))
+    lens = get_lens(token_ids)
     token_ids = np.array(pad_sents(token_ids, tokenizer.pad_token_id))
 
     if truncate > 0:
         token_ids = truncate_sents(token_ids, truncate)
         mask = truncate_sents(mask, truncate)
 
-    return ids, token_ids, mask, label_a, label_b, label_c
+    return ids, token_ids, lens, mask, label_a, label_b, label_c
 
 def process_tweets(tweets):
     # Process tweets
@@ -134,26 +135,28 @@ def all_tasks(filepath: str, tokenizer, truncate=-1):
     # tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
     token_ids = [tokenizer.encode(text=tweets[i], add_special_tokens=True) for i in range(nums)]
     mask = np.array(get_mask(token_ids))
+    lens = get_lens(token_ids)
     token_ids = np.array(pad_sents(token_ids, tokenizer.pad_token_id))
 
     if truncate > 0:
         token_ids = truncate_sents(token_ids, truncate)
         mask = truncate_sents(mask, truncate)
 
-    return ids, token_ids, mask, label_a, label_b, label_c
+    return ids, token_ids, lens, mask, label_a, label_b, label_c
 
 def task_a(filepath: str, tokenizer, truncate=-1):
     nums, ids, tweets, label_a, _, _ = read_file(filepath)
     # tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
     token_ids = [tokenizer.encode(text=tweets[i], add_special_tokens=True) for i in range(nums)]
     mask = np.array(get_mask(token_ids))
+    lens = get_lens(token_ids)
     token_ids = np.array(pad_sents(token_ids, tokenizer.pad_token_id))
 
     if truncate > 0:
         token_ids = truncate_sents(token_ids, truncate)
         mask = truncate_sents(mask, truncate)
 
-    return ids, token_ids, mask, label_a
+    return ids, token_ids, lens, mask, label_a
 
 def task_b(filepath: str, tokenizer, truncate=-1):
     nums, ids, tweets, _, label_b, _ = read_file(filepath)
@@ -170,6 +173,8 @@ def task_b(filepath: str, tokenizer, truncate=-1):
     token_ids = [tokenizer.encode(text=tweets[i], add_special_tokens=True) for i in range(nums)]
     # Get mask
     mask = np.array(get_mask(token_ids))
+    # Get lengths
+    lens = get_lens(token_ids)
     # Pad tokens
     token_ids = np.array(pad_sents(token_ids, tokenizer.pad_token_id))
 
@@ -177,7 +182,7 @@ def task_b(filepath: str, tokenizer, truncate=-1):
         token_ids = truncate_sents(token_ids, truncate)
         mask = truncate_sents(mask, truncate)
 
-    return ids, token_ids, mask, label_b
+    return ids, token_ids, lens, mask, label_b
 
 def task_c(filepath: str, tokenizer, truncate=-1):
     nums, ids, tweets, _, _, label_c = read_file(filepath)
@@ -192,6 +197,8 @@ def task_c(filepath: str, tokenizer, truncate=-1):
     token_ids = [tokenizer.encode(text=tweets[i], add_special_tokens=True) for i in range(nums)]
     # Get mask
     mask = np.array(get_mask(token_ids))
+    # Get lengths
+    lens = get_lens(token_ids)
     # Pad tokens
     token_ids = np.array(pad_sents(token_ids, tokenizer.pad_token_id))
 
@@ -199,4 +206,4 @@ def task_c(filepath: str, tokenizer, truncate=-1):
         token_ids = truncate_sents(token_ids, truncate)
         mask = truncate_sents(mask, truncate)
 
-    return ids, token_ids, mask, label_c
+    return ids, token_ids, lens, mask, label_c

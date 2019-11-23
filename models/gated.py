@@ -82,7 +82,7 @@ class GatedModel(nn.Module):
             self.classifier_b = nn.Linear(in_features=self.hidden_size, out_features=3, bias=True)
             self.classifier_c = nn.Linear(in_features=self.hidden_size, out_features=4, bias=True)
 
-    def forward(self, inputs, mask):
+    def forward(self, inputs, lens, mask):
         outputsA = self.mainA(inputs, attention_mask=mask)
         pooled_outputA = outputsA[1]
         # pooled_outputA = self.dropoutA(pooled_outputA) # batch_size * hidden_size
