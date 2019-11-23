@@ -29,6 +29,8 @@ class Attention(Module):
         self.attention_vector = Parameter(torch.FloatTensor(attention_size))
         self.attention_vector.data.normal_(std=0.05) # Initialize attention vector
 
+        self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+
     def __repr__(self):
         s = '{name}({attention_size}, return attention={return_attention})'
         return s.format(name=self.__class__.__name__, **self.__dict__)
@@ -47,7 +49,7 @@ class Attention(Module):
         # Compute a mask for the attention on the padded sequences
         # See e.g. https://discuss.pytorch.org/t/self-attention-on-words-and-masking/5671/5
         max_len = unnorm_ai.size(1)
-        idxes = torch.arange(0, max_len, out=torch.LongTensor(max_len)).unsqueeze(0)
+        idxes = torch.arange(0, max_len, out=torch.LongTensor(max_len)).unsqueeze(0).to(device=self.device)
         mask = Variable((idxes < input_lengths.unsqueeze(1)).float())
 
         # apply mask and renormalize attention scores (weights)
