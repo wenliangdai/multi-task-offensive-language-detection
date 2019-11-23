@@ -93,7 +93,7 @@ class Trainer():
             iters_per_epoch += 1
 
             inputs = inputs.to(device=self.device)
-            # lens = lens.to(device=self.device)
+            lens = lens.to(device=self.device)
             mask = mask.to(device=self.device)
             labels = labels.to(device=self.device)
 
@@ -137,7 +137,7 @@ class Trainer():
             iters_per_epoch += 1
 
             inputs = inputs.to(device=self.device)
-            # lens = lens.to(device=self.device)
+            lens = lens.to(device=self.device)
             mask = mask.to(device=self.device)
             labels = labels.to(device=self.device)
 
@@ -190,7 +190,7 @@ class Trainer():
             iters_per_epoch += 1
 
             inputs = inputs.to(device=self.device)
-            # lens = lens.to(device=self.device)
+            lens = lens.to(device=self.device)
             mask = mask.to(device=self.device)
             label_A = label_A.to(device=self.device)
             label_B = label_B.to(device=self.device)
@@ -264,7 +264,7 @@ class Trainer():
             iters_per_epoch += 1
 
             inputs = inputs.to(device=self.device)
-            # lens = lens.to(device=self.device)
+            lens = lens.to(device=self.device)
             mask = mask.to(device=self.device)
             label_A = label_A.to(device=self.device)
             label_B = label_B.to(device=self.device)
