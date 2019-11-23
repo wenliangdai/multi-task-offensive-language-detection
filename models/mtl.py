@@ -30,7 +30,7 @@ class MTL_Transformer_LSTM(nn.Module):
                 hidden_size=hidden_size,
                 num_layers=args['num_layers'],
                 bidirectional=True,
-                # batch_first=True,
+                batch_first=True,
                 dropout=args['dropout'] if args['num_layers'] > 1 else 0
             ),
             'b': nn.LSTM(
@@ -38,7 +38,7 @@ class MTL_Transformer_LSTM(nn.Module):
                 hidden_size=hidden_size,
                 num_layers=args['num_layers'],
                 bidirectional=True,
-                # batch_first=True,
+                batch_first=True,
                 dropout=args['dropout'] if args['num_layers'] > 1 else 0
             ),
             'c': nn.LSTM(
@@ -46,7 +46,7 @@ class MTL_Transformer_LSTM(nn.Module):
                 hidden_size=hidden_size,
                 num_layers=args['num_layers'],
                 bidirectional=True,
-                # batch_first=True,
+                batch_first=True,
                 dropout=args['dropout'] if args['num_layers'] > 1 else 0
             ),
             'final': nn.LSTM(
@@ -54,7 +54,7 @@ class MTL_Transformer_LSTM(nn.Module):
                 hidden_size=hidden_size,
                 num_layers=args['num_layers'],
                 bidirectional=True,
-                # batch_first=True,
+                batch_first=True,
                 dropout=args['dropout'] if args['num_layers'] > 1 else 0
             )
         })
@@ -82,7 +82,7 @@ class MTL_Transformer_LSTM(nn.Module):
         )
 
     def forward(self, inputs, lens, mask):
-        embs = self.emb(inputs, attention_mask=mask)[0].transpose(0, 1) # (sequence_length, batch_size, hidden_size)
+        embs = self.emb(inputs, attention_mask=mask)[0] # (batch_size, sequence_length, hidden_size)
 
         # output_a, (logits_a, _) = self.LSTMs['a'](embs)
         # if self.concat:
