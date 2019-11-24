@@ -159,7 +159,7 @@ class MTL_Transformer_LSTM(nn.Module):
 
 class MTL_Transformer_LSTM_gate(nn.Module):
     def __init__(self, model, model_size, args):
-        super(MTL_Transformer_LSTM, self).__init__()
+        super(MTL_Transformer_LSTM_gate, self).__init__()
         hidden_size = args['hidden_size']
         self.add_final = args['add_final']
 
