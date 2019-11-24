@@ -179,6 +179,8 @@ class MTL_Transformer_LSTM_gate(nn.Module):
             attention_probs_dropout_prob=args['attention_dropout']
         )
 
+        self.dropout = nn.Dropout(p=args['dropout'])
+
         self.LSTMs = nn.ModuleDict({
             'a': nn.LSTM(
                 input_size=input_size,
