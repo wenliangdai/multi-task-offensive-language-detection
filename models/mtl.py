@@ -247,9 +247,9 @@ class MTL_Transformer_LSTM_gate(nn.Module):
             'c': nn.Linear(lstm_output_size * 3, lstm_output_size)
         })
 
-        self.gates.apply(self.init_weights)
+        # self.gates.apply(self.init_weights)
 
-    def init_weights(layer):
+    def init_weights(self, layer):
         if type(layer) == nn.Linear:
             torch.nn.init.kaiming_normal_(layer.weight, nonlinearity='relu')
 
