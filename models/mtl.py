@@ -238,8 +238,7 @@ class MTL_Transformer_LSTM_gate(nn.Module):
             )
         })
 
-        for l in self.Linears:
-            self.Linears[l].apply(self.init_weights)
+        self.Linears.apply(self.init_weights)
 
         lstm_output_size = hidden_size * 2
         self.gates = nn.ModuleDict({
