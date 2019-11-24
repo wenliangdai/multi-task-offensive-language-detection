@@ -234,7 +234,7 @@ class MTL_Transformer_LSTM_gate(nn.Module):
                 nn.Linear(hidden_size, 4)
             ),
             'final': nn.Sequential(
-                nn.Linear(linear_in_features * 3, hidden_size),
+                nn.Linear(linear_in_features, hidden_size),
                 nn.ReLU(),
                 nn.Linear(hidden_size, 2)
             )
