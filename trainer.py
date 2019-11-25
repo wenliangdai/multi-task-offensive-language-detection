@@ -83,6 +83,13 @@ class Trainer():
             print(f'Best test results: {self.best_test_f1[0]:.4f}, {self.best_test_f1[1]:.4f}, {self.best_test_f1[2]:.4f}')
             print('=' * 20)
 
+        print('Saving results ...')
+        datetimestr = datetime.datetime.now().strftime('%b-%d_%H:%M:%S')
+        save(
+            (self.train_losses, self.test_losses, self.train_f1, self.test_f1, self.best_train_f1, self.best_test_f1),
+            f'./save/results/single_{self.task_name}_{datetimestr}_{self.best_test_f1[0]:.4f}.pt'
+        )
+
     def train_one_epoch(self):
         self.model.train()
         dataloader = self.dataloaders['train']
@@ -173,6 +180,13 @@ class Trainer():
             if self.final:
                 print(f'Best test results Final: {self.best_test_f1_m[3][0]:.4f}, {self.best_test_f1_m[3][1]:.4f}, {self.best_test_f1_m[3][2]:.4f}')
             print('=' * 20)
+
+        print('Saving results ...')
+        datetimestr = datetime.datetime.now().strftime('%b-%d_%H:%M:%S')
+        save(
+            (self.train_losses, self.test_losses, self.train_f1, self.test_f1, self.best_train_f1_m, self.best_test_f1_m),
+            f'./save/results/mtl_{datetimestr}_{self.best_test_f1_m[0][0]:.4f}_{self.best_test_f1_m[3][0]:.4f}.pt'
+        )
 
     def train_one_epoch_m(self):
         self.model.train()
