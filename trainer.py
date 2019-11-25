@@ -6,6 +6,7 @@ from typing import Dict, List
 import numpy as np
 import torch
 from torch import nn
+import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from sklearn.metrics import f1_score
 # Local files
@@ -48,6 +49,7 @@ class Trainer():
         self.task_name = task_name
         self.model_name = model_name
         self.final = final
+        self.datetimestr = datetime.datetime.now().strftime('%Y-%b-%d_%H:%M:%S')
 
         # Evaluation results
         self.train_losses = []
@@ -84,10 +86,9 @@ class Trainer():
             print('=' * 20)
 
         print('Saving results ...')
-        datetimestr = datetime.datetime.now().strftime('%b-%d_%H:%M:%S')
         save(
             (self.train_losses, self.test_losses, self.train_f1, self.test_f1, self.best_train_f1, self.best_test_f1),
-            f'./save/results/single_{self.task_name}_{datetimestr}_{self.best_test_f1[0]:.4f}.pt'
+            f'./save/results/single_{self.task_name}_{self.datetimestr}_{self.best_test_f1[0]:.4f}.pt'
         )
 
     def train_one_epoch(self):
@@ -182,10 +183,9 @@ class Trainer():
             print('=' * 20)
 
         print('Saving results ...')
-        datetimestr = datetime.datetime.now().strftime('%b-%d_%H:%M:%S')
         save(
             (self.train_losses, self.test_losses, self.train_f1, self.test_f1, self.best_train_f1_m, self.best_test_f1_m),
-            f'./save/results/mtl_{datetimestr}_{self.best_test_f1_m[0][0]:.4f}_{self.best_test_f1_m[3][0]:.4f}.pt'
+            f'./save/results/mtl_{self.datetimestr}_{self.best_test_f1_m[0][0]:.4f}_{self.best_test_f1_m[3][0]:.4f}.pt'
         )
 
     def train_one_epoch_m(self):
@@ -261,6 +261,10 @@ class Trainer():
             for j in range(len(f1[0])):
                 if f1[i][j] > self.best_train_f1_m[i][j]:
                     self.best_train_f1_m[i][j] = f1[i][j]
+                    if not self.final and i == 0 and j == 0:
+                        self.save_model()
+                    if self.final and i == 3 and j == 0:
+                        self.save_model()
 
     def test_m(self):
         self.model.eval()
@@ -336,16 +340,7 @@ class Trainer():
         print(f'Weighted-F1 = {f1[2]:.4f}')
 
     def save_model(self):
-        datetimestr = datetime.datetime.now().strftime('%Y-%b-%d_%H:%M:%S')
         save(
             copy.deepcopy(self.model.state_dict()),
-            f'./save/model_weights_{self.task_name}_{self.model_name}_{datetimestr}.pt'
+            f'./save/models/{self.task_name}_{self.datetimestr}.pt'
         )
-        save((
-            self.train_losses,
-            self.test_losses,
-            self.train_f1,
-            self.test_f1,
-            self.best_train_f1,
-            self.best_test_f1
-        ), f'./save/results_{self.task_name}_{self.model_name}_{datetimestr}.pt')
