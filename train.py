@@ -113,7 +113,7 @@ if __name__ == '__main__':
         optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=wd)
         # A warmup scheduler
         t_total = epochs * len(dataloaders['train'])
-        warmup_steps = np.ceil(t_total / 10.0)
+        warmup_steps = np.ceil(t_total / 10.0) * 2
         scheduler = WarmupCosineSchedule(optimizer, warmup_steps=warmup_steps, t_total=t_total)
     else:
         optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=wd)
