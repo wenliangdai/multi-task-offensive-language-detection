@@ -162,6 +162,7 @@ class MTL_Transformer_LSTM_gate(nn.Module):
         super(MTL_Transformer_LSTM_gate, self).__init__()
         hidden_size = args['hidden_size']
         self.add_final = args['add_final']
+        self.activation = args['activation']
 
         self.concat = args['hidden_combine_method'] == 'concat'
         input_size = 768 if model_size == 'base' else 1024
@@ -172,6 +173,11 @@ class MTL_Transformer_LSTM_gate(nn.Module):
         elif model == 'roberta':
             MODEL = RobertaModel
             model_full_name = f'{model}-{model_size}'
+
+        if args['activation'] == 'relu':
+            activation_func = nn.ReLU
+        elif args['activation'] == 'leaky_relu':
+            activation_func = nn.LeakyReLU
 
         self.emb = MODEL.from_pretrained(
             model_full_name,
@@ -220,40 +226,39 @@ class MTL_Transformer_LSTM_gate(nn.Module):
         self.Linears = nn.ModuleDict({
             'a': nn.Sequential(
                 nn.Linear(linear_in_features, hidden_size),
-                nn.ReLU(),
+                activation_func(),
                 nn.Linear(hidden_size, 2)
             ),
             'b': nn.Sequential(
                 nn.Linear(linear_in_features, hidden_size),
-                nn.ReLU(),
+                activation_func(),
                 nn.Linear(hidden_size, 3)
             ),
             'c': nn.Sequential(
                 nn.Linear(linear_in_features, hidden_size),
-                nn.ReLU(),
+                activation_func(),
                 nn.Linear(hidden_size, 4)
             ),
             'final': nn.Sequential(
-                nn.Linear(linear_in_features, hidden_size),
-                nn.ReLU(),
+                nn.Linear(linear_in_features * 3, hidden_size),
+                activation_func(),
                 nn.Linear(hidden_size, 2)
             )
         })
 
-        self.Linears.apply(self.init_weights)
+        if args['he_init']:
+            self.Linears.apply(self.init_weights)
 
-        lstm_output_size = hidden_size * 2
-        self.gates = nn.ModuleDict({
-            'a': nn.Linear(lstm_output_size * 3, lstm_output_size),
-            'b': nn.Linear(lstm_output_size * 3, lstm_output_size),
-            'c': nn.Linear(lstm_output_size * 3, lstm_output_size)
-        })
-
-        # self.gates.apply(self.init_weights)
+        # lstm_output_size = hidden_size * 2
+        # self.gates = nn.ModuleDict({
+        #     'a': nn.Linear(lstm_output_size * 3, lstm_output_size),
+        #     'b': nn.Linear(lstm_output_size * 3, lstm_output_size),
+        #     'c': nn.Linear(lstm_output_size * 3, lstm_output_size)
+        # })
 
     def init_weights(self, layer):
         if type(layer) == nn.Linear:
-            torch.nn.init.kaiming_normal_(layer.weight, nonlinearity='relu')
+            torch.nn.init.kaiming_normal_(layer.weight, nonlinearity=self.activation)
 
     def forward(self, inputs, lens, mask):
         embs = self.emb(inputs, attention_mask=mask)[0] # (batch_size, sequence_length, hidden_size)
@@ -278,13 +283,16 @@ class MTL_Transformer_LSTM_gate(nn.Module):
             return logits_a, logits_b, logits_c
 
         # (batch, seq_len, num_directions * hidden_size * 3)
-        gate_input = torch.cat((output_a, output_b, output_c), dim=2)
-        gate_a = F.sigmoid(self.gates['a'](gate_input))
-        gate_b = F.sigmoid(self.gates['b'](gate_input))
-        gate_c = F.sigmoid(self.gates['c'](gate_input))
-        final_input = gate_a * output_a + gate_b * output_b + gate_c * output_c
-        _, (h_f, _) = self.LSTMs['final'](final_input)
-        h_f = torch.cat((h_f[0], h_f[1]), dim=1)
-        logits_f = self.Linears['final'](h_f)
+        # gate_input = torch.cat((output_a, output_b, output_c), dim=2)
+        # gate_a = F.sigmoid(self.gates['a'](gate_input))
+        # gate_b = F.sigmoid(self.gates['b'](gate_input))
+        # gate_c = F.sigmoid(self.gates['c'](gate_input))
+        # final_input = gate_a * output_a + gate_b * output_b + gate_c * output_c
+        # _, (h_f, _) = self.LSTMs['final'](final_input)
+        # h_f = torch.cat((h_f[0], h_f[1]), dim=1)
+        # logits_f = self.Linears['final'](h_f)
+
+        gate_input = torch.cat((h_a, h_b, h_c), dim=1) # (batch, hidden_size * 3)
+        logits_f = self.Linears['final'](gate_input)
 
         return logits_a, logits_b, logits_c, logits_f

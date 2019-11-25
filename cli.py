@@ -31,5 +31,9 @@ def get_args():
     parser.add_argument('-hs', '--hidden-size', help='hidden vector size of LSTM', type=int, required=False, default=300)
     parser.add_argument('-hcm', '--hidden-combine-method', help='how to combbine hidden vectors in LSTM', type=str, required=False, default='concat')
 
+    # Linear
+    parser.add_argument('-hi', '--he-init', help='Use He initialization', action='store_true')
+    parser.add_argument('-ac', '--activation', help='Activation function', type=str, required=False, default='relu')
+
     args = vars(parser.parse_args())
     return args
