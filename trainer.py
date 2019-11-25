@@ -183,10 +183,16 @@ class Trainer():
             print('=' * 20)
 
         print('Saving results ...')
-        save(
-            (self.train_losses, self.test_losses, self.train_f1, self.test_f1, self.best_train_f1_m, self.best_test_f1_m),
-            f'./save/results/mtl_{self.datetimestr}_{self.best_test_f1_m[0][0]:.4f}_{self.best_test_f1_m[3][0]:.4f}.pt'
-        )
+        if self.final:
+            save(
+                (self.train_losses, self.test_losses, self.train_f1, self.test_f1, self.best_train_f1_m, self.best_test_f1_m),
+                f'./save/results/mtl_final_{self.datetimestr}_{self.best_test_f1_m[0][0]:.4f}_{self.best_test_f1_m[3][0]:.4f}.pt'
+            )
+        else:
+            save(
+                (self.train_losses, self.test_losses, self.train_f1, self.test_f1, self.best_train_f1_m, self.best_test_f1_m),
+                f'./save/results/mtl_{self.datetimestr}_{self.best_test_f1_m[0][0]:.4f}.pt'
+            )
 
     def train_one_epoch_m(self):
         self.model.train()
