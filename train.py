@@ -30,7 +30,7 @@ if __name__ == '__main__':
     patience = args['patience']
 
     # Fix seed for reproducibility
-    seed = 19951126
+    seed = args['seed']
     torch.manual_seed(seed)
     np.random.seed(seed)
 
