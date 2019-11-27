@@ -44,13 +44,14 @@ def read_test_file(task, tokenizer, truncate=-1):
     # tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
     token_ids = [tokenizer.encode(text=tweets[i], add_special_tokens=True) for i in range(nums)]
     mask = np.array(get_mask(token_ids))
+    lens = get_lens(token_ids)
     token_ids = np.array(pad_sents(token_ids, tokenizer.pad_token_id))
 
     if truncate > 0:
         token_ids = truncate_sents(token_ids, truncate)
         mask = truncate_sents(mask, truncate)
 
-    return ids, token_ids, mask, labels
+    return ids, token_ids, lens, mask, labels
 
 def read_test_file_all(tokenizer, truncate=-1):
     df = pd.read_csv(os.path.join(OLID_PATH, 'testset-levela.tsv'), sep='\t')
