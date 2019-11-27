@@ -46,13 +46,13 @@ if __name__ == '__main__':
         if task == 'all':
             model = MTL_Transformer_LSTM_gate(model_name, model_size, args=args)
         else:
-            model = BERT_LSTM(model_size, num_labels, args=args)
+            model = BERT(model_size, args=args, num_labels=num_labels)
         tokenizer = BertTokenizer.from_pretrained(f'bert-{model_size}-uncased')
     elif model_name == 'roberta':
         if task == 'all':
             model = MTL_Transformer_LSTM_gate(model_name, model_size, args=args)
         else:
-            model = RoBERTa(model_size, num_labels, args=args)
+            model = RoBERTa(model_size, args=args, num_labels=num_labels)
         tokenizer = RobertaTokenizer.from_pretrained(f'roberta-{model_size}')
     elif model_name == 'bert-gate' and task == 'all':
         model_name = model_name.replace('-gate', '')

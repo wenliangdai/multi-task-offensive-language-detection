@@ -14,8 +14,8 @@ class BERT(nn.Module):
         )
 
         # Freeze embeddings' parameters for saving memory
-        for param in self.model.bert.embeddings.parameters():
-            param.requires_grad = False
+        # for param in self.model.bert.embeddings.parameters():
+        #     param.requires_grad = False
 
     def forward(self, inputs, lens, mask, labels):
         outputs = self.model(inputs, attention_mask=mask, labels=labels)
@@ -34,8 +34,8 @@ class RoBERTa(nn.Module):
         )
 
         # Freeze embeddings' parameters for saving memory
-        for param in self.model.roberta.embeddings.parameters():
-            param.requires_grad = False
+        # for param in self.model.roberta.embeddings.parameters():
+        #     param.requires_grad = False
 
     def forward(self, inputs, lens, mask, labels):
         outputs = self.model(inputs, attention_mask=mask, labels=labels)
@@ -95,6 +95,7 @@ class BERT_LSTM(nn.Module):
             hidden_dropout_prob=args['hidden_dropout'],
             attention_probs_dropout_prob=args['attention_dropout']
         )
+
         self.lstm = nn.LSTM(
             input_size=input_size,
             hidden_size=hidden_size,
