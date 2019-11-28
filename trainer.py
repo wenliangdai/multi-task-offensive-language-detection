@@ -11,6 +11,7 @@ from torch.utils.data import DataLoader
 from sklearn.metrics import f1_score
 # Local files
 from utils import save
+from config import LABEL_DICT
 
 class Trainer():
     '''
@@ -226,9 +227,17 @@ class Trainer():
                 y_pred_B = all_logits[1].argmax(dim=1)
                 y_pred_C = all_logits[2].argmax(dim=1)
 
+                Non_null_index_B = label_B != LABEL_DICT['b']['NULL']
+                Non_null_label_B = label_B[Non_null_index_B]
+                Non_null_pred_B = y_pred_B[Non_null_index_B]
+
+                Non_null_index_C = label_C != LABEL_DICT['c']['NULL']
+                Non_null_label_C = label_C[Non_null_index_C]
+                Non_null_pred_C = y_pred_C[Non_null_index_C]
+
                 f1[0] += self.calc_f1(label_A, y_pred_A)
-                f1[1] += self.calc_f1(label_B, y_pred_B)
-                f1[2] += self.calc_f1(label_C, y_pred_C)
+                f1[1] += self.calc_f1(Non_null_label_B, Non_null_pred_B)
+                f1[2] += self.calc_f1(Non_null_label_C, Non_null_pred_C)
 
                 _loss = self.loss_weights[0] * self.criterion(all_logits[0], label_A)
                 _loss += self.loss_weights[1] * self.criterion(all_logits[1], label_B)
