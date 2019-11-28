@@ -224,8 +224,8 @@ class Trainer():
                 # logits_A, logits_B, logits_C = self.model(inputs, mask)
                 all_logits = self.model(inputs, lens, mask)
                 y_pred_A = all_logits[0].argmax(dim=1)
-                y_pred_B = all_logits[1][0:2].argmax(dim=1)
-                y_pred_C = all_logits[2][0:3].argmax(dim=1)
+                y_pred_B = all_logits[1][:, 0:2].argmax(dim=1)
+                y_pred_C = all_logits[2][:, 0:3].argmax(dim=1)
 
                 Non_null_index_B = label_B != LABEL_DICT['b']['NULL']
                 Non_null_label_B = label_B[Non_null_index_B]
