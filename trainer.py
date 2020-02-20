@@ -9,6 +9,7 @@ from torch import nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from sklearn.metrics import f1_score
+from tqdm import tqdm
 # Local files
 from utils import save
 from config import LABEL_DICT
@@ -207,7 +208,7 @@ class Trainer():
             f1 = np.concatenate((f1, [[0, 0, 0]]))
         loss = 0
         iters_per_epoch = 0
-        for iteration, (inputs, lens, mask, label_A, label_B, label_C) in enumerate(dataloader):
+        for iteration, (inputs, lens, mask, label_A, label_B, label_C) in enumerate(tqdm(dataloader, desc='Train M')):
             iters_per_epoch += 1
 
             inputs = inputs.to(device=self.device)
@@ -257,8 +258,8 @@ class Trainer():
                 self.optimizer.step()
                 if self.scheduler is not None:
                     self.scheduler.step()
-                if iteration % self.print_iter == 0:
-                    print(f'Iteration {iteration}: loss = {_loss:.4f}')
+                # if iteration % self.print_iter == 0:
+                #     print(f'Iteration {iteration}: loss = {_loss:.4f}')
 
         loss /= iters_per_epoch
         f1 /= iters_per_epoch
@@ -293,7 +294,7 @@ class Trainer():
             f1 = np.concatenate((f1, [[0, 0, 0]]))
         loss = 0
         iters_per_epoch = 0
-        for iteration, (inputs, lens, mask, label_A, label_B, label_C) in enumerate(dataloader):
+        for iteration, (inputs, lens, mask, label_A, label_B, label_C) in enumerate(tqdm(dataloader, desc='Test M')):
             iters_per_epoch += 1
 
             inputs = inputs.to(device=self.device)
@@ -341,6 +342,9 @@ class Trainer():
                 if f1[i][j] > self.best_test_f1_m[i][j]:
                     self.best_test_f1_m[i][j] = f1[i][j]
 
+                    if i == 0 and j == 0:
+                        self.save_model()
+
     def calc_f1(self, labels, y_pred):
         return np.array([
             f1_score(labels.cpu(), y_pred.cpu(), average='macro'),
@@ -357,5 +361,5 @@ class Trainer():
     def save_model(self):
         save(
             copy.deepcopy(self.model.state_dict()),
-            f'./save/models/{self.task_name}_{self.datetimestr}.pt'
+            f'./save/models/{self.task_name}_{self.best_test_f1_m[0][0]}.pt'
         )
