@@ -258,8 +258,8 @@ class Trainer():
                 self.optimizer.step()
                 if self.scheduler is not None:
                     self.scheduler.step()
-                if iteration % self.print_iter == 0:
-                    print(f'Iteration {iteration}: loss = {_loss:.4f}')
+                # if iteration % self.print_iter == 0:
+                #     print(f'Iteration {iteration}: loss = {_loss:.4f}')
 
         loss /= iters_per_epoch
         f1 /= iters_per_epoch
