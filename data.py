@@ -30,7 +30,7 @@ def read_file(filepath: str):
 
     return nums, ids, tweets, label_a, label_b, label_c
 
-def read_test_file(task, tokenizer, truncate=-1):
+def read_test_file(task, tokenizer, truncate=512):
     df1 = pd.read_csv(os.path.join(OLID_PATH, 'testset-level' + task + '.tsv'), sep='\t')
     df2 = pd.read_csv(os.path.join(OLID_PATH, 'labels-level' + task + '.csv'), sep=',')
     ids = np.array(df1['id'].values)
@@ -42,18 +42,14 @@ def read_test_file(task, tokenizer, truncate=-1):
     tweets = process_tweets(tweets)
 
     # tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-    token_ids = [tokenizer.encode(text=tweets[i], add_special_tokens=True) for i in range(nums)]
+    token_ids = [tokenizer.encode(text=tweets[i], add_special_tokens=True, max_length=truncate) for i in range(nums)]
     mask = np.array(get_mask(token_ids))
     lens = get_lens(token_ids)
     token_ids = np.array(pad_sents(token_ids, tokenizer.pad_token_id))
 
-    if truncate > 0:
-        token_ids = truncate_sents(token_ids, truncate)
-        mask = truncate_sents(mask, truncate)
-
     return ids, token_ids, lens, mask, labels
 
-def read_test_file_all(tokenizer, truncate=-1):
+def read_test_file_all(tokenizer, truncate=512):
     df = pd.read_csv(os.path.join(OLID_PATH, 'testset-levela.tsv'), sep='\t')
     df_a = pd.read_csv(os.path.join(OLID_PATH, 'labels-levela.csv'), sep=',')
     ids = np.array(df['id'].values)
@@ -71,14 +67,10 @@ def read_test_file_all(tokenizer, truncate=-1):
     label_b = [label_data_b[id] if id in label_data_b.keys() else 'NULL' for id in ids]
     label_c = [label_data_c[id] if id in label_data_c.keys() else 'NULL' for id in ids]
 
-    token_ids = [tokenizer.encode(text=tweets[i], add_special_tokens=True) for i in range(nums)]
+    token_ids = [tokenizer.encode(text=tweets[i], add_special_tokens=True, max_length=truncate) for i in range(nums)]
     mask = np.array(get_mask(token_ids))
     lens = get_lens(token_ids)
     token_ids = np.array(pad_sents(token_ids, tokenizer.pad_token_id))
-
-    if truncate > 0:
-        token_ids = truncate_sents(token_ids, truncate)
-        mask = truncate_sents(mask, truncate)
 
     return ids, token_ids, lens, mask, label_a, label_b, label_c
 
@@ -131,35 +123,27 @@ def segment_hashtag(sents):
         sents[i] = ' '.join(sent_tokens)
     return sents
 
-def all_tasks(filepath: str, tokenizer, truncate=-1):
+def all_tasks(filepath: str, tokenizer, truncate=512):
     nums, ids, tweets, label_a, label_b, label_c = read_file(filepath)
     # tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-    token_ids = [tokenizer.encode(text=tweets[i], add_special_tokens=True) for i in range(nums)]
+    token_ids = [tokenizer.encode(text=tweets[i], add_special_tokens=True, max_length=truncate) for i in range(nums)]
     mask = np.array(get_mask(token_ids))
     lens = get_lens(token_ids)
     token_ids = np.array(pad_sents(token_ids, tokenizer.pad_token_id))
-
-    if truncate > 0:
-        token_ids = truncate_sents(token_ids, truncate)
-        mask = truncate_sents(mask, truncate)
 
     return ids, token_ids, lens, mask, label_a, label_b, label_c
 
-def task_a(filepath: str, tokenizer, truncate=-1):
+def task_a(filepath: str, tokenizer, truncate=512):
     nums, ids, tweets, label_a, _, _ = read_file(filepath)
     # tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-    token_ids = [tokenizer.encode(text=tweets[i], add_special_tokens=True) for i in range(nums)]
+    token_ids = [tokenizer.encode(text=tweets[i], add_special_tokens=True, max_length=truncate) for i in range(nums)]
     mask = np.array(get_mask(token_ids))
     lens = get_lens(token_ids)
     token_ids = np.array(pad_sents(token_ids, tokenizer.pad_token_id))
 
-    if truncate > 0:
-        token_ids = truncate_sents(token_ids, truncate)
-        mask = truncate_sents(mask, truncate)
-
     return ids, token_ids, lens, mask, label_a
 
-def task_b(filepath: str, tokenizer, truncate=-1):
+def task_b(filepath: str, tokenizer, truncate=512):
     nums, ids, tweets, _, label_b, _ = read_file(filepath)
     # Only part of the tweets are useful for task b
 
@@ -171,7 +155,7 @@ def task_b(filepath: str, tokenizer, truncate=-1):
     nums = len(label_b)
     # Tokenize
     # tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-    token_ids = [tokenizer.encode(text=tweets[i], add_special_tokens=True) for i in range(nums)]
+    token_ids = [tokenizer.encode(text=tweets[i], add_special_tokens=True, max_length=truncate) for i in range(nums)]
     # Get mask
     mask = np.array(get_mask(token_ids))
     # Get lengths
@@ -179,13 +163,9 @@ def task_b(filepath: str, tokenizer, truncate=-1):
     # Pad tokens
     token_ids = np.array(pad_sents(token_ids, tokenizer.pad_token_id))
 
-    if truncate > 0:
-        token_ids = truncate_sents(token_ids, truncate)
-        mask = truncate_sents(mask, truncate)
-
     return ids, token_ids, lens, mask, label_b
 
-def task_c(filepath: str, tokenizer, truncate=-1):
+def task_c(filepath: str, tokenizer, truncate=512):
     nums, ids, tweets, _, _, label_c = read_file(filepath)
     # Only part of the tweets are useful for task c
     useful = label_c != 'NULL'
@@ -195,16 +175,12 @@ def task_c(filepath: str, tokenizer, truncate=-1):
     nums = len(label_c)
     # Tokenize
     # tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-    token_ids = [tokenizer.encode(text=tweets[i], add_special_tokens=True) for i in range(nums)]
+    token_ids = [tokenizer.encode(text=tweets[i], add_special_tokens=True, max_length=truncate) for i in range(nums)]
     # Get mask
     mask = np.array(get_mask(token_ids))
     # Get lengths
     lens = get_lens(token_ids)
     # Pad tokens
     token_ids = np.array(pad_sents(token_ids, tokenizer.pad_token_id))
-
-    if truncate > 0:
-        token_ids = truncate_sents(token_ids, truncate)
-        mask = truncate_sents(mask, truncate)
 
     return ids, token_ids, lens, mask, label_c
