@@ -80,9 +80,9 @@ class Trainer():
         for epoch in range(self.epochs):
             print(f'Epoch {epoch}')
             print('=' * 20)
-            print('Training...')
+            # print('Training...')
             self.train_one_epoch()
-            print('Testing...')
+            # print('Testing...')
             self.test()
             print(f'Best test results: {self.best_test_f1[0]:.4f}, {self.best_test_f1[1]:.4f}, {self.best_test_f1[2]:.4f}')
             print('=' * 20)
@@ -99,7 +99,7 @@ class Trainer():
         f1 = np.array([0, 0, 0], dtype=np.float64) # [macro, micro, weighted]
         loss = 0
         iters_per_epoch = 0
-        for iteration, (inputs, lens, mask, labels) in enumerate(dataloader):
+        for iteration, (inputs, lens, mask, labels) in enumerate(tqdm(dataloader, desc='Training')):
             iters_per_epoch += 1
 
             inputs = inputs.to(device=self.device)
@@ -123,8 +123,8 @@ class Trainer():
                 self.optimizer.step()
                 if self.scheduler is not None:
                     self.scheduler.step()
-                if iteration % self.print_iter == 0:
-                    print(f'Iteration {iteration}: loss = {_loss:.4f}')
+                # if iteration % self.print_iter == 0:
+                #     print(f'Iteration {iteration}: loss = {_loss:.4f}')
 
         loss /= iters_per_epoch
         f1 /= iters_per_epoch
@@ -143,7 +143,7 @@ class Trainer():
         f1 = np.array([0, 0, 0], np.float64) # [macro, micro, weighted]
         loss = 0
         iters_per_epoch = 0
-        for iteration, (inputs, lens, mask, labels) in enumerate(dataloader):
+        for iteration, (inputs, lens, mask, labels) in enumerate(tqdm(dataloader, desc='Testing')):
             iters_per_epoch += 1
 
             inputs = inputs.to(device=self.device)
