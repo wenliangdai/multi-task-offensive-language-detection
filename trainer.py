@@ -168,6 +168,8 @@ class Trainer():
         for i in range(len(f1)):
             if f1[i] > self.best_test_f1[i]:
                 self.best_test_f1[i] = f1[i]
+                if i == 0:
+                    self.save_model()
 
     def train_m(self):
         for epoch in range(self.epochs):
@@ -359,7 +361,9 @@ class Trainer():
         print(f'Weighted-F1 = {f1[2]:.4f}')
 
     def save_model(self):
-        save(
-            copy.deepcopy(self.model.state_dict()),
-            f'./save/models/{self.task_name}_{self.best_test_f1_m[0][0]}.pt'
-        )
+        if self.task_name == 'all':
+            filename = f'./save/models/{self.task_name}_{self.model_name}_{self.best_test_f1_m[0][0]}.pt'
+        else:
+            filename = f'./save/models/{self.task_name}_{self.model_name}_{self.best_test_f1[0]}.pt'
+
+        save(copy.deepcopy(self.model.state_dict()), filename)
