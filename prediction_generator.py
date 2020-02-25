@@ -118,7 +118,8 @@ if __name__ == '__main__':
     
     print('success load model')
     
-    
+    # save predictions
+    save_path = input("please write the path of saving files：")
     
     test_set = TestDataset(ids=ids, input_ids=input_ids, mask=mask)
     test_loader = DataLoader(dataset=test_set, batch_size=bs)
@@ -146,7 +147,7 @@ if __name__ == '__main__':
             line.append('OFF' if y_pred_A[i]==0 else 'NOT')
             lines.append(line)
             
-    with open("predictions.csv","w") as csvfile:
+    with open(save_path,"w") as csvfile:
         writer = csv.writer(csvfile, lineterminator='\n')
         writer.writerow(['ID','LABEL'])
         writer.writerows(lines)
