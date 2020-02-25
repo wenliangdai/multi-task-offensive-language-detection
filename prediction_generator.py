@@ -20,8 +20,8 @@ from models.mtl import MTL_Transformer_LSTM, MTL_Transformer_LSTM_gate
 from transformers import BertTokenizer, RobertaTokenizer#, WarmupCosineSchedule
 from trainer import Trainer
 
-def read_test_data(tokenizer):
-    df1 = pd.read_csv('./testset-taska-2020.tsv', sep='\t')
+def read_test_data(tokenizer, test_file):
+    df1 = pd.read_csv(test_file, sep='\t')
     ids = np.array(df1['id'].values)
     tweets = np.array(df1['tweet'].values)
     nums = len(df1)
@@ -106,10 +106,11 @@ if __name__ == '__main__':
     
     
     # prepare data set
-    ids, input_ids, mask = read_test_data(tokenizer)
+    test_file = input("please write the path of test data file：")
+    ids, input_ids, mask = read_test_data(tokenizer, test_file)
     
     # load pretrained model
-    model_file = input("please write the path of model file：");
+    model_file = input("please write the path of model file：")
     print('your model is: {}'.format(model_file))
     # model_file = './save/models/all_2020-Feb-20_13:33:56.pt'
     saved_model = load(model_file)
