@@ -109,9 +109,9 @@ if __name__ == '__main__':
     ids, input_ids, mask = read_test_data(tokenizer)
     
     # load pretrained model
-    # model_file = input("please write the path of model file：");
-    # print('your model is: {}'.format(model_file))
-    model_file = './save/models/all_2020-Feb-20_13:33:56.pt'
+    model_file = input("please write the path of model file：");
+    print('your model is: {}'.format(model_file))
+    # model_file = './save/models/all_2020-Feb-20_13:33:56.pt'
     saved_model = load(model_file)
     model.load_state_dict(saved_model, strict=False)
     
