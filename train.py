@@ -10,7 +10,7 @@ from datasets import HuggingfaceDataset, HuggingfaceMTDataset, ImbalancedDataset
 from models.bert import BERT, RoBERTa, MTModel, BERT_LSTM
 from models.gated import GatedModel
 from models.mtl import MTL_Transformer_LSTM, MTL_Transformer_LSTM_gate
-from transformers import BertTokenizer, RobertaTokenizer, WarmupCosineSchedule
+from transformers import BertTokenizer, RobertaTokenizer, get_cosine_schedule_with_warmup
 from trainer import Trainer
 
 TRAIN_PATH = os.path.join(OLID_PATH, 'olid-training-v1.0.tsv')
@@ -114,7 +114,7 @@ if __name__ == '__main__':
         # A warmup scheduler
         t_total = epochs * len(dataloaders['train'])
         warmup_steps = np.ceil(t_total / 10.0) * 2
-        scheduler = WarmupCosineSchedule(optimizer, warmup_steps=warmup_steps, t_total=t_total)
+        scheduler = get_cosine_schedule_with_warmup(optimizer, num_warmup_steps=warmup_steps, num_training_steps=t_total)
     else:
         optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=wd)
         scheduler = None
