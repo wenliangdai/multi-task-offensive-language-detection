@@ -245,7 +245,7 @@ class Trainer():
                 Non_null_label_C = label_C[Non_null_index_C]
                 Non_null_pred_C = y_pred_C[Non_null_index_C]
 
-                labels_all_A = label_A.numpy() if labels_all_A is None else np.concatenate((labels_all_A, label_A.numpy()))
+                labels_all_A = label_A.cpu().numpy() if labels_all_A is None else np.concatenate((labels_all_A, label_A.cpu().numpy()))
                 labels_all_B = Non_null_label_B.cpu().numpy() if labels_all_B is None else np.concatenate((labels_all_B, Non_null_label_B.cpu().numpy()))
                 labels_all_C = Non_null_label_C.cpu().numpy() if labels_all_C is None else np.concatenate((labels_all_C, Non_null_label_C.cpu().numpy()))
 
