@@ -17,9 +17,9 @@ class BERT(nn.Module):
         # for param in self.model.bert.embeddings.parameters():
         #     param.requires_grad = False
 
-    def forward(self, inputs, lens, mask, labels):
-        outputs = self.model(inputs, attention_mask=mask, labels=labels)
-        loss, logits = outputs[:2]
+    def forward(self, inputs, lens, mask, labels=None):
+        outputs = self.model(inputs, attention_mask=mask)
+        logits = outputs[0]
         # return loss, logits
         return logits
 
