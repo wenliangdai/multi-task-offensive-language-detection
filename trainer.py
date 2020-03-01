@@ -35,7 +35,8 @@ class Trainer():
         patience: int,
         task_name: str,
         model_name: str,
-        final: bool
+        final: bool,
+        seed: int
     ):
         self.model = model
         self.epochs = epochs
@@ -51,6 +52,7 @@ class Trainer():
         self.task_name = task_name
         self.model_name = model_name
         self.final = final
+        self.seed = seed
         self.datetimestr = datetime.datetime.now().strftime('%Y-%b-%d_%H:%M:%S')
 
         # Evaluation results
@@ -408,7 +410,7 @@ class Trainer():
     def save_model(self):
         print('Saving model...')
         if self.task_name == 'all':
-            filename = f'./save/models/{self.task_name}_{self.model_name}_{self.best_test_f1_m[0]}.pt'
+            filename = f'./save/models/{self.task_name}_{self.model_name}_{self.best_test_f1_m[0]}_seed{self.seed}.pt'
         else:
-            filename = f'./save/models/{self.task_name}_{self.model_name}_{self.best_test_f1}.pt'
+            filename = f'./save/models/{self.task_name}_{self.model_name}_{self.best_test_f1}_seed{self.seed}.pt'
         save(copy.deepcopy(self.model.state_dict()), filename)

@@ -133,7 +133,8 @@ if __name__ == '__main__':
         patience=patience,
         task_name=task,
         model_name=model_name,
-        final=args['add_final']
+        final=args['add_final'],
+        seed=args['seed']
     )
     if task in ['a', 'b', 'c']:
         trainer.train()
