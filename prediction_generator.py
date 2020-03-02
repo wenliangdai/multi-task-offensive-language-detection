@@ -144,12 +144,12 @@ if __name__ == '__main__':
         for i in range(len(ids)):
             line = []
             line.append(ids[i])
-            line.append('OFF' if y_pred_A[i]==0 else 'NOT')
+            line.append('OFF' if y_pred_A[i] == 0 else 'NOT')
             lines.append(line)
 
-    with open(save_path,"w") as csvfile:
+    with open(save_path, "w") as csvfile:
         writer = csv.writer(csvfile, lineterminator='\n')
-        writer.writerow(['ID','LABEL'])
+        writer.writerow(['id', 'tweet'])
         writer.writerows(lines)
 
 
