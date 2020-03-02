@@ -37,7 +37,7 @@ def read_test_data(tokenizer, test_file, truncate=512):
 
 class TestDataset(Dataset):
     def __init__(self, ids, input_ids, mask):
-        self.ids =  torch.tensor(ids)
+        self.ids = ids
         self.input_ids = torch.tensor(input_ids)
         self.mask = torch.tensor(mask, dtype=torch.float32)
 
@@ -128,7 +128,7 @@ if __name__ == '__main__':
     lines = []
 
     for iteration, (ids, input_ids, length, mask) in enumerate(tqdm(test_loader)):
-        ids = ids.to(device=device)
+        # ids = ids.to(device=device)
         input_ids = input_ids.to(device=device)
         length = length.to(device=device)
         mask = mask.to(device=device)
@@ -138,7 +138,7 @@ if __name__ == '__main__':
             y_pred_B = all_logits[1].argmax(dim=1)
             y_pred_C = all_logits[2].argmax(dim=1)
 
-        ids = ids.tolist()
+        # ids = ids.tolist()
         y_pred_A = y_pred_A.tolist()
 
         for i in range(len(ids)):
