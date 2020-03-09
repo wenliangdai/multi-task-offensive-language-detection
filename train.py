@@ -66,6 +66,9 @@ if __name__ == '__main__':
     # Move model to correct device
     model = model.to(device=device)
 
+    if args['ckpt'] != '':
+        model.load_state_dict(load(args['ckpt']))
+
     # Read in data depends on different subtasks
     # label_orders = {'a': ['OFF', 'NOT'], 'b': ['TIN', 'UNT'], 'c': ['IND', 'GRP', 'OTH']}
     if task in ['a', 'b', 'c']:

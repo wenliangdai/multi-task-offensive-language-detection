@@ -22,6 +22,8 @@ def get_args():
     parser.add_argument('-af', '--add-final', help='Add the final loss layer', action='store_true')
     parser.add_argument('-se', '--seed', help='Random seed', type=int, required=False, default=19951126)
 
+    parser.add_argument('--ckpt', type=str, required=False, default='')
+
     # Transformers
     parser.add_argument('-ad', '--attention-dropout', help='transformer attention dropout', type=float, required=False, default=0.1)
     parser.add_argument('-hd', '--hidden-dropout', help='transformer hidden dropout', type=float, required=False, default=0.1)
