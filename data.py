@@ -8,7 +8,7 @@ import wordsegment
 # from nltk.tokenize import word_tokenize
 # from vocabulary import Vocab
 from config import OLID_PATH # SAVE_DIR, PAD_TOKEN, SEP_TOEKN
-from utils import pad_sents, get_mask, truncate_sents, get_lens
+from utils import pad_sents, get_mask, get_lens
 
 # Uncomment this line if you haven't download nltk packages
 # nltk.download()

@@ -7,9 +7,9 @@ from config import OLID_PATH
 from cli import get_args
 from utils import load
 from datasets import HuggingfaceDataset, HuggingfaceMTDataset, ImbalancedDatasetSampler
-from models.bert import BERT, RoBERTa, MTModel, BERT_LSTM
+from models.bert import BERT, RoBERTa
 from models.gated import GatedModel
-from models.mtl import MTL_Transformer_LSTM, MTL_Transformer_LSTM_gate
+from models.mtl import MTL_Transformer_LSTM
 from transformers import BertTokenizer, RobertaTokenizer, get_cosine_schedule_with_warmup
 from trainer import Trainer
 
@@ -41,16 +41,15 @@ if __name__ == '__main__':
     num_labels = 3 if task == 'c' else 2
 
     # Set tokenizer for different models
-
     if model_name == 'bert':
         if task == 'all':
-            model = MTL_Transformer_LSTM_gate(model_name, model_size, args=args)
+            model = MTL_Transformer_LSTM(model_name, model_size, args=args)
         else:
             model = BERT(model_size, args=args, num_labels=num_labels)
         tokenizer = BertTokenizer.from_pretrained(f'bert-{model_size}-uncased')
     elif model_name == 'roberta':
         if task == 'all':
-            model = MTL_Transformer_LSTM_gate(model_name, model_size, args=args)
+            model = MTL_Transformer_LSTM(model_name, model_size, args=args)
         else:
             model = RoBERTa(model_size, args=args, num_labels=num_labels)
         tokenizer = RobertaTokenizer.from_pretrained(f'roberta-{model_size}')
@@ -117,7 +116,11 @@ if __name__ == '__main__':
         # A warmup scheduler
         t_total = epochs * len(dataloaders['train'])
         warmup_steps = np.ceil(t_total / 10.0) * 2
-        scheduler = get_cosine_schedule_with_warmup(optimizer, num_warmup_steps=warmup_steps, num_training_steps=t_total)
+        scheduler = get_cosine_schedule_with_warmup(
+            optimizer,
+            num_warmup_steps=warmup_steps,
+            num_training_steps=t_total
+        )
     else:
         optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=wd)
         scheduler = None
@@ -139,6 +142,7 @@ if __name__ == '__main__':
         final=args['add_final'],
         seed=args['seed']
     )
+
     if task in ['a', 'b', 'c']:
         trainer.train()
     else:
