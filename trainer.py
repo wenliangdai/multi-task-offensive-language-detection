@@ -6,7 +6,6 @@ from typing import Dict, List
 import numpy as np
 import torch
 from torch import nn
-import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from sklearn.metrics import f1_score
 from tqdm import tqdm

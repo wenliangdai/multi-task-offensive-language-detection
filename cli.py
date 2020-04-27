@@ -19,7 +19,6 @@ def get_args():
     parser.add_argument('-fr', '--freeze', help='Freeze the embedding layer or not to use less GPU memory', type=bool, required=False, default=False)
     parser.add_argument('-lw', '--loss-weights', help='Weights for all losses', nargs='+', type=float, required=False, default=[1, 1, 1, 1])
     parser.add_argument('-sc', '--scheduler', help='Use scheduler to optimizer', action='store_true')
-    parser.add_argument('-af', '--add-final', help='Add the final loss layer', action='store_true')
     parser.add_argument('-se', '--seed', help='Random seed', type=int, required=False, default=19951126)
 
     parser.add_argument('--ckpt', type=str, required=False, default='')
