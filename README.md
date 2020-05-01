@@ -25,7 +25,7 @@ Transfer learning and multi-task learning are two major techniques that are wide
 ## Requirements
 
 1. Python 3.6 +
-2. Pytorch 1.3 +
+2. PyTorch 1.3 +
 3. Ideally use GPU to train/eval
 
 ## Command Line Arguments
