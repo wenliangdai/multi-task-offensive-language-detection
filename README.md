@@ -92,8 +92,12 @@ optional arguments:
 
 Train single-task model for subtask-A
 
-`python train.py -bs=32 -lr=3e-6 -ep=20 -pa=3 --model=bert --task=a --clip --cuda=1`
+```console
+python train.py -bs=32 -lr=3e-6 -ep=20 -pa=3 --model=bert --task=a --clip --cuda=1
+```
 
 Train multi-task model
 
-`python train.py -bs=32 -lr=3e-6 -ep=20 -pa=3 --model=bert --task=all --clip --loss-weights 0.4 0.3 0.3 --cuda=1`
+```console
+python train.py -bs=32 -lr=3e-6 -ep=20 -pa=3 --model=bert --task=all --clip --loss-weights 0.4 0.3 0.3 --cuda=1
+```
