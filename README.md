@@ -1,8 +1,9 @@
 # BERT-Based Multi-Task Learning for Offensive Language Detection
 
-<img src="img/pytorch-logo-dark.png" width="10%"> [![CC BY 4.0][cc-by-shield]][cc-by]
+<img src="img/pytorch-logo-dark.png" width="10%"/> [![](https://img.shields.io/badge/python-3.5+-orange.svg)](https://www.python.org/downloads/) [![CC BY 4.0][cc-by-shield]][cc-by]
 
-<img align="right" src="img/HKUST.jpg" width="15%">
+
+<img align="right" src="img/HKUST.jpg" width="15%"/>
 
 [cc-by]: http://creativecommons.org/licenses/by/4.0/
 [cc-by-shield]: https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg
@@ -24,9 +25,9 @@ Transfer learning and multi-task learning are two major techniques that are wide
 
 ## Requirements
 
-1. Python 3.6 +
+1. Python 3.5 +
 2. PyTorch 1.3 +
-3. Ideally use GPU to train/eval
+3. We use one GTX 1080Ti to train
 
 ## Command Line Arguments
 
