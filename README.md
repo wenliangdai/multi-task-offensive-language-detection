@@ -8,7 +8,7 @@
 [cc-by]: http://creativecommons.org/licenses/by/4.0/
 [cc-by-shield]: https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg
 
-This repository is for the SemEval-2020 Workshop Paper (under reviewing): 
+Paper accepted at the SemEval-2020 Workshop (COLING 2020):
 
 [Kungfupanda at SemEval-2020 Task 12: BERT-Based Multi-Task Learning for Offensive Language Detection](https://arxiv.org/abs/2004.13432) 
 (Wenliang Dai*, Tiezheng Yu*, Zihan Liu, Pascale Fung)
