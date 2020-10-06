@@ -13,6 +13,18 @@ Paper accepted at the SemEval-2020 Workshop (COLING 2020):
 [Kungfupanda at SemEval-2020 Task 12: BERT-Based Multi-Task Learning for Offensive Language Detection](https://arxiv.org/abs/2004.13432) 
 (Wenliang Dai*, Tiezheng Yu*, Zihan Liu, Pascale Fung)
 
+If your work is inspired by our paper, or you use any code snippets in this repo, please cite this paper, the BibTex is shown below:
+
+<pre>
+@article{Dai2020KungfupandaAS,
+  title={Kungfupanda at SemEval-2020 Task 12: BERT-Based Multi-Task Learning for Offensive Language Detection},
+  author={Wenliang Dai and Tiezheng Yu and Zihan Liu and Pascale Fung},
+  journal={ArXiv},
+  year={2020},
+  volume={abs/2004.13432}
+}
+</pre>
+
 ## Abstract
 
 Nowadays, offensive content in social media has become a serious problem. 
