@@ -39,7 +39,8 @@ Transfer learning and multi-task learning are two major techniques that are wide
 
 1. Python 3.5 +
 2. PyTorch 1.3 +
-3. We use one GTX 1080Ti to train
+3. Huggingface transformers 2.x
+4. We use one GTX 1080Ti to train
 
 ## Command Line Arguments
 
