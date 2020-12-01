@@ -64,7 +64,6 @@ if __name__ == '__main__':
     lr = args['learning_rate']
     wd = args['weight_decay']
     bs = args['batch_size']
-    print_iter = args['print_iter']
     patience = args['patience']
 
     # Fix seed for reproducibility

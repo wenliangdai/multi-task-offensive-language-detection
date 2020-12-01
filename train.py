@@ -26,7 +26,6 @@ if __name__ == '__main__':
     lr = args['learning_rate']
     wd = args['weight_decay']
     bs = args['batch_size']
-    print_iter = args['print_iter']
     patience = args['patience']
 
     # Fix seed for reproducibility
@@ -135,11 +134,9 @@ if __name__ == '__main__':
         optimizer=optimizer,
         scheduler=scheduler,
         device=device,
-        print_iter=print_iter,
         patience=patience,
         task_name=task,
         model_name=model_name,
-        final=args['add_final'],
         seed=args['seed']
     )
 

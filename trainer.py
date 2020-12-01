@@ -30,11 +30,9 @@ class Trainer():
         optimizer: torch.optim.Optimizer,
         scheduler: torch.optim.lr_scheduler,
         device: str,
-        print_iter: int,
         patience: int,
         task_name: str,
         model_name: str,
-        final: bool,
         seed: int
     ):
         self.model = model
@@ -46,11 +44,9 @@ class Trainer():
         self.optimizer = optimizer
         self.scheduler = scheduler
         self.device = device
-        self.print_iter = print_iter
         self.patience = patience
         self.task_name = task_name
         self.model_name = model_name
-        self.final = final
         self.seed = seed
         self.datetimestr = datetime.datetime.now().strftime('%Y-%b-%d_%H:%M:%S')
 
@@ -65,9 +61,6 @@ class Trainer():
         # Evaluation results for multi-task
         self.best_train_f1_m = np.array([0, 0, 0], dtype=np.float64)
         self.best_test_f1_m = np.array([0, 0, 0], dtype=np.float64)
-        if self.final:
-            self.best_train_f1_m = np.array([0, 0, 0, 0], dtype=np.float64)
-            self.best_test_f1_m = np.array([0, 0, 0, 0], dtype=np.float64)
 
     def train(self):
         for epoch in range(self.epochs):
@@ -189,21 +182,13 @@ class Trainer():
             print(f'Best test results A: {self.best_test_f1_m[0]:.4f}')
             print(f'Best test results B: {self.best_test_f1_m[1]:.4f}')
             print(f'Best test results C: {self.best_test_f1_m[2]:.4f}')
-            if self.final:
-                print(f'Best test results Final: {self.best_test_f1_m[3]:.4f}')
             print('=' * 20)
 
         print('Saving results ...')
-        if self.final:
-            save(
-                (self.train_losses, self.test_losses, self.train_f1, self.test_f1, self.best_train_f1_m, self.best_test_f1_m),
-                f'./save/results/mtl_final_{self.datetimestr}_{self.best_test_f1_m[0]:.4f}_{self.best_test_f1_m[3]:.4f}.pt'
-            )
-        else:
-            save(
-                (self.train_losses, self.test_losses, self.train_f1, self.test_f1, self.best_train_f1_m, self.best_test_f1_m),
-                f'./save/results/mtl_{self.datetimestr}_{self.best_test_f1_m[0]:.4f}.pt'
-            )
+        save(
+            (self.train_losses, self.test_losses, self.train_f1, self.test_f1, self.best_train_f1_m, self.best_test_f1_m),
+            f'./save/results/mtl_{self.datetimestr}_{self.best_test_f1_m[0]:.4f}.pt'
+        )
 
     def train_one_epoch_m(self):
         self.model.train()
@@ -261,12 +246,6 @@ class Trainer():
                 _loss = self.loss_weights[0] * self.criterion(all_logits[0], label_A)
                 _loss += self.loss_weights[1] * self.criterion(all_logits[1], label_B)
                 _loss += self.loss_weights[2] * self.criterion(all_logits[2], label_C)
-
-                if self.final:
-                    y_pred_final = all_logits[3].argmax(dim=1)
-                    _loss += self.loss_weights[3] * self.criterion(all_logits[3], label_A)
-                    f1[3] += self.calc_f1(label_A, y_pred_final)
-
                 loss += _loss.item()
 
                 # Backward
@@ -286,8 +265,6 @@ class Trainer():
         print(f'A: {f1_A:.4f}')
         print(f'B: {f1_B:.4f}')
         print(f'C: {f1_C:.4f}')
-        if self.final:
-            print(f'Final: {f1[3][0]:.4f}, {f1[3][1]:.4f}, {f1[3][2]:.4f}')
 
         self.train_losses.append(loss)
         self.train_f1.append([f1_A, f1_B, f1_C])
@@ -299,20 +276,9 @@ class Trainer():
         if f1_C > self.best_train_f1_m[2]:
             self.best_train_f1_m[2] = f1_C
 
-        # for i in range(len(f1)):
-        #     for j in range(len(f1[0])):
-        #         if f1[i][j] > self.best_train_f1_m[i][j]:
-        #             self.best_train_f1_m[i][j] = f1[i][j]
-        #             if not self.final and i == 0 and j == 0:
-        #                 self.save_model()
-        #             if self.final and i == 3 and j == 0:
-        #                 self.save_model()
-
     def test_m(self):
         self.model.eval()
         dataloader = self.dataloaders['test']
-        if self.final:
-            f1 = np.concatenate((f1, [[0, 0, 0]]))
         loss = 0
         iters_per_epoch = 0
 
@@ -354,12 +320,6 @@ class Trainer():
                 _loss = self.loss_weights[0] * self.criterion(all_logits[0], label_A)
                 _loss += self.loss_weights[1] * self.criterion(all_logits[1], label_B)
                 _loss += self.loss_weights[2] * self.criterion(all_logits[2], label_C)
-
-                if self.final:
-                    y_pred_final = all_logits[3].argmax(dim=1)
-                    _loss += self.loss_weights[3] * self.criterion(all_logits[3], label_A)
-                    f1[3] += self.calc_f1(label_A, y_pred_final)
-
                 loss += _loss.item()
 
         loss /= iters_per_epoch
@@ -371,9 +331,6 @@ class Trainer():
         print(f'A: {f1_A:.4f}')
         print(f'B: {f1_B:.4f}')
         print(f'C: {f1_C:.4f}')
-
-        if self.final:
-            print(f'Final: {f1[3][0]:.4f}, {f1[3][1]:.4f}, {f1[3][2]:.4f}')
 
         self.test_losses.append(loss)
         self.test_f1.append([f1_A, f1_B, f1_C])

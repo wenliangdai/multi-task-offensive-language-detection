@@ -1,7 +1,7 @@
 import argparse
 
 def get_args():
-    parser = argparse.ArgumentParser(description='TRADE Multi-Domain DST')
+    parser = argparse.ArgumentParser(description='BERT-Based Multi-Task Learning for Offensive Language Detection')
 
     # Training hyper-parameters
     parser.add_argument('-bs', '--batch-size', help='Batch size', type=int, required=True)
@@ -10,7 +10,6 @@ def get_args():
     parser.add_argument('-ep', '--epochs', help='Number of epochs', type=int, required=True)
     parser.add_argument('-tr', '--truncate', help='Truncate the sequence length to', type=int, required=False, default=512)
     parser.add_argument('-pa', '--patience', help='Patience to stop training', type=int, required=False, default=5)
-    parser.add_argument('-pr', '--print-iter', help='Print every X iterations during training', type=int, required=False, default=1000)
     parser.add_argument('-cu', '--cuda', help='Cude device number', type=str, required=False, default='0')
     parser.add_argument('-ta', '--task', help='Which subtask to run', type=str, required=True)
     parser.add_argument('-mo', '--model', help='Which model to use', type=str, required=True)
@@ -32,10 +31,6 @@ def get_args():
     parser.add_argument('-nl', '--num-layers', help='num of layers of LSTM', type=int, required=False, default=1)
     parser.add_argument('-hs', '--hidden-size', help='hidden vector size of LSTM', type=int, required=False, default=300)
     parser.add_argument('-hcm', '--hidden-combine-method', help='how to combbine hidden vectors in LSTM', type=str, required=False, default='concat')
-
-    # Linear
-    parser.add_argument('-hi', '--he-init', help='Use He initialization', action='store_true')
-    parser.add_argument('-ac', '--activation', help='Activation function', type=str, required=False, default='relu')
 
     args = vars(parser.parse_args())
     return args
