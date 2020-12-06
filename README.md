@@ -8,10 +8,11 @@
 [cc-by]: http://creativecommons.org/licenses/by/4.0/
 [cc-by-shield]: https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg
 
-Paper accepted at the SemEval-2020 Workshop (COLING 2020):
+Paper accepted at the [SemEval-2020](https://www.aclweb.org/anthology/events/semeval-2020/) (COLING 2020):
 
-[Kungfupanda at SemEval-2020 Task 12: BERT-Based Multi-Task Learning for Offensive Language Detection](https://arxiv.org/abs/2004.13432) 
-(Wenliang Dai*, Tiezheng Yu*, Zihan Liu, Pascale Fung)
+**Kungfupanda at SemEval-2020 Task 12: BERT-Based Multi-Task Learning for Offensive Language Detection**, by **[Wenliang Dai*](https://wenliangdai.github.io/)**, Tiezheng Yu*, [Zihan Liu](https://zliucr.github.io/), Pascale Fung.
+
+[[ACL Anthology](https://www.aclweb.org/anthology/2020.semeval-1.272/)][[ArXiv](https://arxiv.org/abs/2004.13432)][[Semantic Scholar](https://www.semanticscholar.org/paper/Kungfupanda-at-SemEval-2020-Task-12%3A-BERT-Based-for-Dai-Yu/fa46a8c826fc456923fba090e6c837d0813c98f9)]
 
 If your work is inspired by our paper, or you use any code snippets in this repo, please cite this paper, the BibTex is shown below:
 
